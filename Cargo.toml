@@ -1,0 +1,11 @@
+[package]
+name = "redo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crossterm = "0.28.1"
+
+[[bin]]
+name = "redo"
+path = "main.rs"
