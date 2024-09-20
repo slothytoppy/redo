@@ -1,0 +1,1 @@
+Filter<Filter<Map<std::str::Lines<'_>, {closure@todo.rs:45:18: 45:24}>, {closure@todo.rs:46:21: 46:27}>, for<'a> fn(&'a str) -> bool {TodoList::<'_>::is_valid}>
