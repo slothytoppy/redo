@@ -46,6 +46,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "dummy_thick"
+version = "1.0.0"
+
+[[package]]
 name = "errno"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -128,9 +132,6 @@ dependencies = [
 [[package]]
 name = "redo"
 version = "0.1.0"
-dependencies = [
- "crossterm",
-]
 
 [[package]]
 name = "redox_syscall"
@@ -195,6 +196,14 @@ name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+
+[[package]]
+name = "tui"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "redo",
+]
 
 [[package]]
 name = "wasi"
