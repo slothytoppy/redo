@@ -1,25 +1,34 @@
 #[derive(Debug, Default)]
-pub struct Todo<'todo> {
-    pub data: &'todo str,
-    done: bool,
+pub struct Todo {
+    pub data: String,
+    pub done: bool,
 }
 
 #[derive(Debug, Default)]
-pub struct TodoList<'todo> {
-    pub data: Vec<Todo<'todo>>,
+pub struct TodoList {
+    pub data: Vec<Todo>,
 }
 
-impl<'todo> From<&'todo str> for Todo<'todo> {
-    fn from(value: &'todo str) -> Self {
-        Todo {
-            data: value,
-            done: value.starts_with("[x]"),
-        }
+impl std::fmt::Display for Todo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let done = match self.done {
+            true => "[x]",
+            false => "[ ]",
+        };
+        write!(f, "{} {}", done, self.data)
     }
 }
 
-impl<'todo> TodoList<'todo> {
-    pub fn push(&mut self, contents: &'todo str) {
+impl TodoList {
+    pub fn push_str(&mut self, contents: &str) {
+        let todo = Todo {
+            data: contents.to_string(),
+            done: false,
+        };
+        self.data.push(todo);
+    }
+
+    pub fn push(&mut self, contents: String) {
         let todo = Todo {
             data: contents,
             done: false,
@@ -32,11 +41,21 @@ impl<'todo> TodoList<'todo> {
     }
 }
 
+impl std::fmt::Display for TodoList {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.data.is_empty() {
+            return write!(f, "TodoList: empty");
+        }
+        let mut data = String::from("\n");
+        self.data
+            .iter()
+            .for_each(|todo| data.push_str(&format!("{} {}\n", todo.data, todo.done).to_string()));
+        write!(f, "TodoList: {}", data)
+    }
+}
+
 #[cfg(test)]
 mod test {
-    // smh i forget
-
-    use super::*;
     use crate::parser;
 
     #[test]
@@ -49,6 +68,6 @@ mod test {
         "#;
 
         let res = parser::parse(data).expect("TodoList was empty for some reason");
-        assert!(res.data.len() > 0);
+        assert!(res.data.is_empty());
     }
 }

@@ -8,5 +8,5 @@ crossterm = "0.28.1"
 redo.workspace=true
 
 [[bin]]
-name="urmom"
+name="redo"
 path="src/main.rs"

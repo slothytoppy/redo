@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::todo::{Todo, TodoList};
 
 fn is_valid(start: &str) -> bool {
@@ -7,24 +5,35 @@ fn is_valid(start: &str) -> bool {
     if start.len() < 3 {
         return false;
     }
-    let a = start.chars().nth(0).unwrap();
+    let a = start.chars().next().unwrap();
     let b = start.chars().nth(1).unwrap();
     let c = start.chars().nth(2).unwrap();
     a == '[' && c == ']' && matches!(b, ' ' | 'x')
 }
 
-pub fn parse<'list>(content: &'list str) -> Result<TodoList<'list>, String> {
-    if content.len() == 0 {
+impl From<String> for Todo {
+    fn from(value: String) -> Self {
+        Todo {
+            done: value.starts_with("[x]"),
+            data: value,
+        }
+    }
+}
+
+pub fn parse(content: &str) -> Result<TodoList, String> {
+    if content.is_empty() || !is_valid(content) {
         return Err("Could not parse because contents was empty".to_string());
     }
-    let todos = content
+    let data = content
         .lines()
         .map(|line| line.trim())
         .filter(|line| !line.is_empty())
         .filter(|line| is_valid(line))
+        .map(|line| line[3..].trim().to_string())
         .map(Into::into)
         .collect::<Vec<_>>();
-    let list = TodoList { data: todos };
+
+    let list = TodoList { data };
     Ok(list)
 }
 
