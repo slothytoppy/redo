@@ -1,7 +1,26 @@
+use std::default;
+
+#[derive(Debug, Default)]
+pub enum TodoStatus {
+    #[default]
+    Complete,
+    Incomplete,
+}
+
+impl std::fmt::Display for TodoStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let done = match self {
+            TodoStatus::Complete => "[x]",
+            TodoStatus::Incomplete => "[ ]",
+        };
+        write!(f, "{}", done)
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Todo {
     pub data: String,
-    pub done: bool,
+    pub status: TodoStatus,
 }
 
 #[derive(Debug, Default)]
@@ -11,11 +30,7 @@ pub struct TodoList {
 
 impl std::fmt::Display for Todo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let done = match self.done {
-            true => "[x]",
-            false => "[ ]",
-        };
-        write!(f, "{} {}", done, self.data)
+        write!(f, "{} {}", self.status, self.data)
     }
 }
 
@@ -23,7 +38,7 @@ impl TodoList {
     pub fn push_str(&mut self, contents: &str) {
         let todo = Todo {
             data: contents.to_string(),
-            done: false,
+            status: TodoStatus::Incomplete,
         };
         self.data.push(todo);
     }
@@ -31,7 +46,7 @@ impl TodoList {
     pub fn push(&mut self, contents: String) {
         let todo = Todo {
             data: contents,
-            done: false,
+            status: TodoStatus::Incomplete,
         };
         self.data.push(todo);
     }
@@ -46,11 +61,11 @@ impl std::fmt::Display for TodoList {
         if self.data.is_empty() {
             return write!(f, "TodoList: empty");
         }
-        let mut data = String::from("\n");
+        let mut data = String::default();
         self.data
             .iter()
-            .for_each(|todo| data.push_str(&format!("{} {}\n", todo.data, todo.done).to_string()));
-        write!(f, "TodoList: {}", data)
+            .for_each(|todo| data.push_str(&format!("{} {}", todo.status, todo.data)));
+        write!(f, "{}", data)
     }
 }
 

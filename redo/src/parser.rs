@@ -1,4 +1,4 @@
-use crate::todo::{Todo, TodoList};
+use crate::todo::{Todo, TodoList, TodoStatus};
 
 fn is_valid(start: &str) -> bool {
     // prevents panic on iteration
@@ -13,10 +13,11 @@ fn is_valid(start: &str) -> bool {
 
 impl From<String> for Todo {
     fn from(value: String) -> Self {
-        Todo {
-            done: value.starts_with("[x]"),
-            data: value,
-        }
+        let status = match value.starts_with("[x]") {
+            true => TodoStatus::Complete,
+            false => TodoStatus::Incomplete,
+        };
+        Todo { status, data: value }
     }
 }
 

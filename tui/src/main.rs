@@ -1,5 +1,6 @@
-use tui::App;
+use app::App;
 
+mod app;
 mod tui;
 
 fn main() {
