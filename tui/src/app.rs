@@ -8,32 +8,25 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use crossterm::{cursor, event, execute, queue};
+use redo::todo::TodoListCollection;
 use redo::{filesystem, parser, TodoList};
 
 use crate::tui::{self, Screen};
 
 #[derive(Default, Debug)]
-pub struct TodoListCollection {
-    pub list: Vec<TodoList>,
-}
-
-impl TodoListCollection {
-    pub fn get_todo_list(&mut self, index: usize) -> &mut TodoList {
-        self.list.index_mut(index)
-    }
-}
-
-#[derive(Default, Debug)]
 pub struct App {
-    pub list: TodoListCollection,
+    pub collection: TodoListCollection,
     pub file: String,
     renderer: tui::Renderer,
     screen: Screen,
 }
 
 impl App {
-    pub fn get_todo_list(&mut self, index: usize) -> &mut TodoList {
-        self.list.get_todo_list(index)
+    pub fn get_todo_list(&mut self, index: usize) -> Option<&mut TodoList> {
+        match self.collection.get_mut_todo_list(index) {
+            Some(list) => Some(list),
+            None => None,
+        }
     }
 
     pub fn init(args: std::env::Args) -> Self {
@@ -55,11 +48,9 @@ impl App {
             }
         };
         let content = filesystem::read(&file);
-        let todos = TodoListCollection {
-            list: vec![parser::parse(&content).unwrap_or_default()],
-        };
+        let collection = parser::parse_collection(&content).unwrap_or_default();
         Self {
-            list: todos,
+            collection,
             file,
             ..Default::default()
         }
@@ -69,7 +60,7 @@ impl App {
         let _ = disable_raw_mode();
         let _ = crossterm::execute!(std::io::stdout(), LeaveAlternateScreen);
         let mut tmp = String::default();
-        for list in &self.list.list {
+        for list in &self.collection.lists {
             list.data.iter().for_each(|todo| tmp.push_str(&format!("{todo}")));
         }
         filesystem::write(&self.file, tmp);
@@ -87,7 +78,7 @@ impl App {
 
         let mut buffer = String::default();
         let mut stdout = io::stdout();
-        self.renderer.draw(&self.screen, &self.list);
+        self.renderer.draw(&self.screen, &self.collection);
         let _ = stdout.flush();
 
         loop {
@@ -116,13 +107,18 @@ impl App {
                         buffer.push(char);
                     }
                     if let KeyCode::Enter = key.code {
-                        self.list.get_todo_list(0).push_str(&buffer);
-                        buffer.clear();
+                        match self.collection.get_mut_todo_list(0) {
+                            Some(list) => {
+                                list.push_str(&buffer);
+                                buffer.clear();
+                            }
+                            None => {}
+                        }
                     }
                 }
                 _ => {}
             };
-            self.renderer.draw(&self.screen, &self.list);
+            self.renderer.draw(&self.screen, &self.collection);
             let _ = stdout.flush();
         }
         self.deinit();

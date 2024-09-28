@@ -1,4 +1,6 @@
-use std::default;
+use std::ops::{Index, IndexMut};
+
+use crate::parser;
 
 #[derive(Debug, Default)]
 pub enum TodoStatus {
@@ -23,18 +25,26 @@ pub struct Todo {
     pub status: TodoStatus,
 }
 
-#[derive(Debug, Default)]
-pub struct TodoList {
-    pub data: Vec<Todo>,
-}
-
 impl std::fmt::Display for Todo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.status, self.data)
     }
 }
 
+#[derive(Debug, Default)]
+pub struct TodoList {
+    pub name: Option<String>,
+    pub data: Vec<Todo>,
+}
+
 impl TodoList {
+    pub fn new(name: Option<String>, contents: &str) -> Self {
+        match parser::parse(contents) {
+            Ok(list) => TodoList { data: list.data, name },
+            Err(..) => TodoList { name, data: vec![] },
+        }
+    }
+
     pub fn push_str(&mut self, contents: &str) {
         let todo = Todo {
             data: contents.to_string(),
@@ -43,11 +53,7 @@ impl TodoList {
         self.data.push(todo);
     }
 
-    pub fn push(&mut self, contents: String) {
-        let todo = Todo {
-            data: contents,
-            status: TodoStatus::Incomplete,
-        };
+    pub fn push_todo(&mut self, todo: Todo) {
         self.data.push(todo);
     }
 
@@ -69,20 +75,64 @@ impl std::fmt::Display for TodoList {
     }
 }
 
+///
+/// goal: multiple todo lists per file, each list is named, you would see a list as something like
+/// List{
+///     name:"example1", contents:TodoList{
+///         data:Vec<Todo>={
+///         Todo{ data:"example2", status:Incomplete},
+///         ...,
+///         }
+///     }
+/// }
+/// and there would be some struct that can contain multiple lists like
+/// Collection{contents:Vec<List>}
+#[derive(Debug, Default)]
+pub struct TodoListCollection {
+    pub lists: Vec<TodoList>,
+}
+
+impl TodoListCollection {
+    pub fn push(&mut self, list: TodoList) {
+        self.lists.push(list);
+    }
+
+    pub fn get_todo_list(&self, index: usize) -> Option<&TodoList> {
+        if self.lists.is_empty() || index > self.lists.len() {
+            return None;
+        }
+        let list = self.lists.index(index);
+        Some(list)
+    }
+
+    pub fn get_mut_todo_list(&mut self, index: usize) -> Option<&mut TodoList> {
+        if self.lists.is_empty() || index > self.lists.len() {
+            return None;
+        }
+        let list = self.lists.index_mut(index);
+        Some(list)
+    }
+}
+
+impl std::fmt::Display for TodoListCollection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.lists)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::parser;
 
     #[test]
     fn test_deserialize() {
-        let data = r#"
-        [x] asdwasd
+        let data = r#"[x] asdwasd
         [x] wehadhkjs
         [ ] urmom
-        [ 
+        [ ]
         "#;
 
-        let res = parser::parse(data).expect("TodoList was empty for some reason");
-        assert!(res.data.is_empty());
+        let res = parser::parse(data).expect("");
+        assert!(!res.data.is_empty());
     }
 }

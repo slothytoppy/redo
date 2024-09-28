@@ -1,4 +1,6 @@
-use crate::todo::{Todo, TodoList, TodoStatus};
+use std::ops::IndexMut;
+
+use crate::todo::{Todo, TodoList, TodoListCollection, TodoStatus};
 
 fn is_valid(start: &str) -> bool {
     // prevents panic on iteration
@@ -21,28 +23,86 @@ impl From<String> for Todo {
     }
 }
 
+pub fn parse_todo(line: &str) -> Option<Todo> {
+    if line.is_empty() || !is_valid(line) {
+        return None;
+    }
+    let mut todo = Todo::default();
+    if line.chars().nth(1).unwrap_or_default() == 'x' {
+        todo.status = TodoStatus::Complete;
+    } else {
+        todo.status = TodoStatus::Incomplete;
+    }
+    todo.data = line[3..].trim().to_string();
+    Some(todo)
+}
+
 pub fn parse(content: &str) -> Result<TodoList, String> {
-    if content.is_empty() || !is_valid(content) {
+    if content.is_empty() {
         return Err("Could not parse because contents was empty".to_string());
+    }
+    if !is_valid(content) {
+        return Err(format!("Could not parse because contents was invalid: {content}"));
     }
     let data = content
         .lines()
-        .map(|line| line.trim())
         .filter(|line| !line.is_empty())
         .filter(|line| is_valid(line))
         .map(|line| line[3..].trim().to_string())
         .map(Into::into)
         .collect::<Vec<_>>();
 
-    let list = TodoList { data };
+    let list = TodoList { name: None, data };
     Ok(list)
 }
 
-pub fn collect_todos(contents: TodoList) -> String {
-    contents
-        .data
-        .iter()
-        .map(|todo| todo.data.to_string())
-        .collect::<Vec<_>>()
-        .join("\n")
+fn is_collection(line: &str) -> bool {
+    if line.len() > 3 && line.starts_with("[") && line.ends_with("]:") {
+        return true;
+    }
+    false
+}
+
+pub fn parse_collection(content: &str) -> Result<TodoListCollection, String> {
+    if content.is_empty() {
+        return Err("Could not parse because contents was empty".to_string());
+    }
+
+    let lines: Vec<&str> = content.split("\n").collect();
+    let mut collection = TodoListCollection::default();
+    let mut current_collection: usize = 0;
+
+    for line in lines {
+        let line = line.trim();
+        match is_collection(line) {
+            true => {
+                collection.push(TodoList::new(Some(line.to_string()), line));
+                current_collection += 1;
+            }
+            false => {
+                let list = &mut collection.lists.index_mut(current_collection.saturating_sub(1));
+                match parse_todo(line) {
+                    Some(todo) => list.push_todo(todo),
+                    None => {}
+                };
+            }
+        }
+    }
+
+    Ok(collection)
+}
+
+#[cfg(test)]
+mod test {
+    use super::parse_collection;
+
+    #[test]
+    fn parse_collection_test() {
+        let content = r#"[workouts]:
+        [ ] urmom"#;
+        let collection = parse_collection(content).expect("");
+        println!("{collection:#?}");
+        assert!(collection.lists.len() == 1);
+        panic!();
+    }
 }

@@ -1,12 +1,8 @@
-use std::ops::Index;
-
 use crossterm::cursor::{MoveDown, MoveTo, MoveToNextLine, RestorePosition, SavePosition};
 use crossterm::queue;
 use crossterm::style::Print;
 use crossterm::terminal::{Clear, ClearType};
-use redo::todo::TodoList;
-
-use crate::app::TodoListCollection;
+use redo::todo::TodoListCollection;
 
 #[derive(Debug, Default)]
 pub enum Screen {
@@ -37,10 +33,13 @@ impl Renderer {
 
     fn draw_selection(&self, collection: &TodoListCollection) {
         let _ = queue!(&self.output, MoveTo(0, 0));
-        for (idx, list) in collection.list.iter().enumerate() {
-            for todo in &list.data {
-                let _ = queue!(&self.output, Print(&todo.data), MoveTo(0, idx.saturating_add(1) as u16));
-            }
+        for (idx, list) in collection.lists.iter().enumerate() {
+            let name = match &list.name {
+                Some(name) => name,
+                None => &String::default(),
+            };
+            let _ = queue!(&self.output, Print(collection), MoveTo(0, idx as u16 + 1));
+            for todo in &list.data {}
         }
     }
 
