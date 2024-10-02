@@ -1,0 +1,75 @@
+[?1049h[2J[1;1HTodoListCollection { lists: [TodoList { name: Some("[workouts]"), data: [Todo { data: "urdad", status: Incomplete }, Todo { data: "urmomma", status: Complete }] }, TodoList { name: Some("[rests]"), data: [Todo { data: "urfather", status: Incomplete }] }] }
+App {
+    file: "main.todo",
+    collection: TodoListCollection {
+        lists: [
+            TodoList {
+                name: Some(
+                    "[workouts]",
+                ),
+                data: [
+                    Todo {
+                        data: "urdad",
+                        status: Incomplete,
+                    },
+                    Todo {
+                        data: "urmomma",
+                        status: Complete,
+                    },
+                ],
+            },
+            TodoList {
+                name: Some(
+                    "[rests]",
+                ),
+                data: [
+                    Todo {
+                        data: "urfather",
+                        status: Incomplete,
+                    },
+                ],
+            },
+        ],
+    },
+    viewport: Viewport {
+        x: 48,
+        y: 1008,
+    },
+    interface: UserInterface {
+        left_bar: LeftBar {
+            names: [
+                "[workouts]",
+                "[rests]",
+            ],
+            cursor: Cursor {
+                y: 0,
+                x: 0,
+            },
+        },
+        editor: Editor {
+            list: TodoList {
+                name: Some(
+                    "[workouts]",
+                ),
+                data: [
+                    Todo {
+                        data: "urdad",
+                        status: Incomplete,
+                    },
+                    Todo {
+                        data: "urmomma",
+                        status: Complete,
+                    },
+                ],
+            },
+            cursor: Cursor {
+                y: 0,
+                x: 0,
+            },
+        },
+        state: Selection,
+        renderer: Renderer {
+            stdout: Stdout { .. },
+        },
+    },
+}

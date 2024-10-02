@@ -2,24 +2,24 @@ use std::ops::{Index, IndexMut};
 
 use crate::parser;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum TodoStatus {
     #[default]
-    Complete,
     Incomplete,
+    Complete,
 }
 
 impl std::fmt::Display for TodoStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let done = match self {
-            TodoStatus::Complete => "[x]",
-            TodoStatus::Incomplete => "[ ]",
+            TodoStatus::Complete => "Complete",
+            TodoStatus::Incomplete => "Incomplete",
         };
         write!(f, "{}", done)
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Todo {
     pub data: String,
     pub status: TodoStatus,
@@ -31,7 +31,7 @@ impl std::fmt::Display for Todo {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TodoList {
     pub name: Option<String>,
     pub data: Vec<Todo>,
@@ -64,9 +64,6 @@ impl TodoList {
 
 impl std::fmt::Display for TodoList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.data.is_empty() {
-            return write!(f, "TodoList: empty");
-        }
         let mut data = String::default();
         self.data
             .iter()
@@ -75,18 +72,6 @@ impl std::fmt::Display for TodoList {
     }
 }
 
-///
-/// goal: multiple todo lists per file, each list is named, you would see a list as something like
-/// List{
-///     name:"example1", contents:TodoList{
-///         data:Vec<Todo>={
-///         Todo{ data:"example2", status:Incomplete},
-///         ...,
-///         }
-///     }
-/// }
-/// and there would be some struct that can contain multiple lists like
-/// Collection{contents:Vec<List>}
 #[derive(Debug, Default)]
 pub struct TodoListCollection {
     pub lists: Vec<TodoList>,

@@ -16,10 +16,10 @@ pub fn read<P: AsRef<std::path::Path>>(file_name: P) -> String {
 
 pub fn write<P: AsRef<std::path::Path>>(file_name: P, contents: String) -> bool {
     match OpenOptions::new()
-        .write(true)
         .read(true)
         .create_new(true)
         .truncate(false)
+        .append(true)
         .open(file_name.as_ref())
     {
         Ok(mut file) => {

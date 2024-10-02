@@ -14,12 +14,12 @@ fn is_valid(start: &str) -> bool {
 }
 
 impl From<String> for Todo {
-    fn from(value: String) -> Self {
-        let status = match value.starts_with("[x]") {
+    fn from(data: String) -> Self {
+        let status = match data.starts_with("[x]") {
             true => TodoStatus::Complete,
             false => TodoStatus::Incomplete,
         };
-        Todo { status, data: value }
+        Todo { status, data }
     }
 }
 
@@ -76,15 +76,15 @@ pub fn parse_collection(content: &str) -> Result<TodoListCollection, String> {
         let line = line.trim();
         match is_collection(line) {
             true => {
-                collection.push(TodoList::new(Some(line.to_string()), line));
+                let collection_name = line.trim_matches(':');
+                collection.push(TodoList::new(Some(collection_name.to_string()), line));
                 current_collection += 1;
             }
             false => {
                 let list = &mut collection.lists.index_mut(current_collection.saturating_sub(1));
-                match parse_todo(line) {
-                    Some(todo) => list.push_todo(todo),
-                    None => {}
-                };
+                if let Some(todo) = parse_todo(line) {
+                    list.push_todo(todo)
+                }
             }
         }
     }
@@ -101,8 +101,7 @@ mod test {
         let content = r#"[workouts]:
         [ ] urmom"#;
         let collection = parse_collection(content).expect("");
-        println!("{collection:#?}");
         assert!(collection.lists.len() == 1);
-        panic!();
+        //panic!();
     }
 }
