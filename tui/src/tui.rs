@@ -1,4 +1,4 @@
-use std::io::stdout;
+use std::io::{stdout, Write};
 
 use crossterm::cursor::{MoveTo, MoveToNextLine};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
@@ -10,7 +10,6 @@ use redo::TodoList;
 
 use crate::cursor::{self, Cursor, CursorMovement};
 use crate::event::EventHandler;
-use crate::renderer::Renderer;
 use crate::viewport::Viewport;
 
 #[derive(Debug, Default)]
@@ -53,12 +52,12 @@ impl EventHandler for SelectionBar {
 impl CursorMovement for SelectionBar {
     fn move_up(&mut self, amount: u16) {
         self.cursor.y = self.cursor.y.saturating_sub(amount);
+        tracing::debug!("selection_bar: move_up {:?}", self.cursor);
     }
 
     fn move_down(&mut self, amount: u16) {
-        if self.cursor.y < self.names().len() as u16 - 1 {
-            self.cursor.y += amount;
-        }
+        self.cursor.y = u16::min(self.cursor.y + amount, self.names().len().saturating_sub(1) as u16);
+        tracing::debug!("selection_bar move_down: {:?}", self.cursor);
     }
 }
 
@@ -74,29 +73,35 @@ impl Editor {
         &self.list
     }
 
-    pub fn set_list(&mut self, list: TodoList) {
-        self.list = list
+    pub fn set_list(&mut self, list: &TodoList) {
+        self.list = list.clone()
     }
 }
 
 impl CursorMovement for Editor {
     fn move_up(&mut self, amount: u16) {
         self.cursor.y = self.cursor.y.saturating_sub(amount);
+        tracing::debug!("editor move_up: {:?}", self.cursor);
     }
 
     fn move_down(&mut self, amount: u16) {
-        self.cursor.y = u16::min(self.cursor.y + amount, self.list.data.len() as u16 - 1);
+        self.cursor.y = u16::min(self.cursor.y + amount, self.list.data.len().saturating_sub(1) as u16);
+        tracing::debug!("editor move_down: {:?}", self.cursor);
     }
 
     fn move_left(&mut self, amount: u16) {
-        self.cursor.x = self.cursor.x.saturating_sub(amount).max(self.viewport.x());
+        self.cursor.x = self.cursor.x.saturating_sub(amount).min(self.viewport.x());
+        tracing::debug!("editor move_left: {:?}", self.cursor);
     }
 
     fn move_right(&mut self, amount: u16) {
+        // padding for the todo status + the space at the end
+        let padding = 3_u16;
         self.cursor.x = u16::min(
             self.cursor.x + amount,
-            self.list.len_line(self.cursor.y as usize) as u16 - 1,
+            self.list.len_line(self.cursor.y as usize) as u16 + padding,
         );
+        tracing::debug!("editor move_right: {:?}", self.cursor);
     }
 }
 
@@ -114,7 +119,7 @@ impl EventHandler for Editor {
                 KeyCode::Down => self.move_down(1),
                 KeyCode::Left => self.move_left(1),
                 KeyCode::Right => self.move_right(1),
-                KeyCode::Char(' ') => {
+                KeyCode::Char('x') => {
                     if let Some(todo) = self.list.data.get_mut(self.cursor.y as usize) {
                         todo.status.toggle()
                     }
@@ -129,7 +134,6 @@ impl EventHandler for Editor {
 
 #[derive(Debug, Default)]
 pub struct Interface {
-    render: Renderer,
     screen_size: Viewport,
     selection_bar: SelectionBar,
     editor: Editor,
@@ -137,11 +141,43 @@ pub struct Interface {
     pub collection: TodoListCollection,
 }
 
+impl EventHandler for Interface {
+    type Event = bool;
+
+    fn handle_event(&mut self, event: &Event) -> Option<Self::Event> {
+        self.handle_resize(event);
+        if self.should_quit(event) {
+            return Some(true);
+        }
+
+        match self.screen_state {
+            ScreenState::Selection => {
+                if let Some(idx) = self.selection_bar.handle_event(event) {
+                    let list = &self.collection.lists[idx];
+                    self.editor.set_list(list);
+                    self.change_state(ScreenState::Main);
+                }
+            }
+
+            ScreenState::Main => {
+                if self.editor.handle_event(event).unwrap_or(false) {
+                    self.change_state(ScreenState::Selection);
+                }
+            }
+        };
+
+        None
+    }
+}
+
 impl Interface {
     pub fn new(collection: TodoListCollection) -> Self {
         Self {
             collection,
-            ..Default::default()
+            selection_bar: SelectionBar::default(),
+            editor: Editor::default(),
+            screen_size: Viewport::default(),
+            screen_state: ScreenState::default(),
         }
     }
 
@@ -151,7 +187,7 @@ impl Interface {
     }
 
     pub fn set_editor_list(&mut self, list: TodoList) {
-        self.editor.set_list(list);
+        self.editor.set_list(&list);
     }
 
     pub fn get_editor_viewport(&self) -> &Viewport {
@@ -182,51 +218,36 @@ impl Interface {
         self.selection_bar.names = names;
     }
 
-    pub fn handle_event(&mut self, event: &Event) {
-        self.handle_resize(event);
-        //if self.should_quit(event) {}
-        match self.screen_state {
-            ScreenState::Main => {
-                if self.editor.handle_event(event).unwrap_or(false) {
-                    self.change_state(ScreenState::Selection);
-                }
-                self.render.move_to(&self.editor.cursor);
-            }
-            ScreenState::Selection => {
-                if let Some(idx) = self.selection_bar.handle_event(event) {
-                    let list = &self.collection.lists[idx];
-                    self.editor.set_list(list.clone());
-                    self.change_state(ScreenState::Main);
-                }
-                self.render.move_to(&self.selection_bar.cursor);
-            }
-        }
-    }
-
     fn draw_selection_screen(&self) {
-        self.render.move_to(&cursor::Cursor::new(0, 0));
+        let cursor = Cursor::default();
+        queue!(stdout(), MoveTo(cursor.x, cursor.y)).ok();
         for (idx, name) in self.selection_bar.names.iter().enumerate() {
             if idx as u16 > self.selection_bar.viewport.y() {
                 return;
             }
-            self.render.queue(Print(name)).queue(MoveToNextLine(1));
+            queue!(stdout(), Print(name), MoveToNextLine(1)).ok();
         }
-        self.render.move_to(&self.selection_bar.cursor);
     }
 
     fn draw_main_screen(&self) {
-        tracing::info!("{}", self.editor.list);
-
-        for (idx, name) in self.editor.list().data.iter().enumerate() {
+        for (idx, todo) in self.editor.list().data.iter().enumerate() {
             if idx as u16 > self.editor.viewport.y() {
                 return;
             }
+
+            let name = &todo.data;
+            let status = match todo.status {
+                redo::todo::TodoStatus::Complete => "[x] ",
+                redo::todo::TodoStatus::Incomplete => "[ ] ",
+            };
+
             queue!(
                 std::io::stdout(),
                 MoveTo(self.editor.viewport.x(), idx as u16),
-                Print(name)
+                Print(status),
+                Print(name),
             )
-            .expect("printing to stdout somehow failed????? pepega");
+            .expect("printing to stdout somehow failed?????");
         }
     }
 
@@ -234,18 +255,19 @@ impl Interface {
         queue!(stdout(), Clear(crossterm::terminal::ClearType::All)).ok();
         self.draw_selection_screen();
         self.draw_main_screen();
+
         match self.screen_state {
-            ScreenState::Selection => queue!(
+            ScreenState::Selection => queue!(stdout(), MoveTo(0, self.selection_bar.cursor.y)).ok(),
+            ScreenState::Main => queue!(
                 stdout(),
-                MoveTo(self.selection_bar.cursor.x, self.selection_bar.cursor.y)
+                MoveTo(self.editor.cursor.x + self.editor.viewport.x(), self.editor.cursor.y)
             )
             .ok(),
-            ScreenState::Main => queue!(stdout(), MoveTo(self.editor.cursor.x, self.editor.cursor.y)).ok(),
         };
     }
 
     pub fn flush(&mut self) {
-        self.render.flush();
+        let _ = stdout().flush();
     }
 
     pub fn should_quit(&mut self, event: &Event) -> bool {

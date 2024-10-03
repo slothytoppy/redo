@@ -112,7 +112,7 @@ impl std::fmt::Display for TodoList {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TodoListCollection {
     pub lists: Vec<TodoList>,
 }

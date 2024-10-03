@@ -4,7 +4,6 @@ use tracing_subscriber::FmtSubscriber;
 mod app;
 mod cursor;
 mod event;
-mod renderer;
 mod tui;
 mod viewport;
 

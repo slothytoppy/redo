@@ -5,6 +5,7 @@ use crossterm::terminal::{
 };
 use redo::{filesystem, parser};
 
+use crate::event::EventHandler;
 use crate::tui::Interface;
 use crate::viewport::Viewport;
 
@@ -101,12 +102,11 @@ impl App {
         loop {
             let event = read().unwrap();
 
-            self.interface.handle_event(&event);
-            if self.interface.should_quit(&event) {
+            if let Some(true) = self.interface.handle_event(&event) {
                 break;
             }
-            self.interface.draw();
 
+            self.interface.draw();
             self.interface.flush();
         }
         self.deinit();
