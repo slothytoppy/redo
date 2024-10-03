@@ -1,0 +1,4 @@
+[toolchain]
+channel = "stable"
+component = "rust-src"
+profile = "default"

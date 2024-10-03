@@ -21,24 +21,22 @@ impl Default for Renderer {
 
 impl Renderer {
     /// allows for pipelining multiple commands
-    pub fn queue<T: crossterm::Command>(&mut self, command: T) -> &Self {
-        let _ = queue!(self.stdout, command);
+    pub fn queue<T: crossterm::Command>(&self, command: T) -> &Self {
+        let _ = queue!(&self.stdout, command);
         self
     }
 
-    pub fn move_to(&mut self, cursor: &Cursor) {
-        self.queue(MoveTo(cursor.x(), cursor.y()));
+    pub fn move_to(&self, cursor: &Cursor) {
+        self.queue(MoveTo(cursor.x, cursor.y));
     }
 
-    pub fn draw<T: std::fmt::Display>(&mut self, drawable: &T) {
+    pub fn draw<T: std::fmt::Display>(&self, drawable: &T) {
         self.queue(Print(drawable));
     }
 
-    pub fn draw_vec<T: Display>(&mut self, drawable: &[T]) {
+    pub fn draw_vec<T: Display>(&self, drawable: &[T]) {
         for val in drawable {
-            self.queue(Print(val));
-            self.queue(MoveDown(1));
-            self.queue(MoveToColumn(0));
+            self.queue(Print(val)).queue(MoveDown(1)).queue(MoveToColumn(0));
         }
     }
 
@@ -46,7 +44,7 @@ impl Renderer {
         let _ = self.stdout.flush();
     }
 
-    pub fn clear(&mut self, amount: Clear) {
+    pub fn clear(&self, amount: Clear) {
         self.queue(amount);
     }
 }

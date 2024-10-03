@@ -1,75 +1,447 @@
-[?1049h[2J[1;1HTodoListCollection { lists: [TodoList { name: Some("[workouts]"), data: [Todo { data: "urdad", status: Incomplete }, Todo { data: "urmomma", status: Complete }] }, TodoList { name: Some("[rests]"), data: [Todo { data: "urfather", status: Incomplete }] }] }
-App {
-    file: "main.todo",
-    collection: TodoListCollection {
-        lists: [
-            TodoList {
-                name: Some(
-                    "[workouts]",
-                ),
-                data: [
-                    Todo {
-                        data: "urdad",
-                        status: Incomplete,
-                    },
-                    Todo {
-                        data: "urmomma",
-                        status: Complete,
-                    },
-                ],
-            },
-            TodoList {
-                name: Some(
-                    "[rests]",
-                ),
-                data: [
-                    Todo {
-                        data: "urfather",
-                        status: Incomplete,
-                    },
-                ],
-            },
-        ],
-    },
-    viewport: Viewport {
-        x: 48,
-        y: 1008,
-    },
-    interface: UserInterface {
-        left_bar: LeftBar {
-            names: [
-                "[workouts]",
-                "[rests]",
-            ],
-            cursor: Cursor {
-                y: 0,
-                x: 0,
-            },
-        },
-        editor: Editor {
-            list: TodoList {
-                name: Some(
-                    "[workouts]",
-                ),
-                data: [
-                    Todo {
-                        data: "urdad",
-                        status: Incomplete,
-                    },
-                    Todo {
-                        data: "urmomma",
-                        status: Complete,
-                    },
-                ],
-            },
-            cursor: Cursor {
-                y: 0,
-                x: 0,
-            },
-        },
-        state: Selection,
-        renderer: Renderer {
-            stdout: Stdout { .. },
-        },
-    },
-}
+0 02024-10-03T04:17:36.686658Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:17.809151Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:18.175389Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:18.526291Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:18.899824Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:19.278698Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:19.547097Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:19.786714Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:20.013854Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:20.280776Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:20.508393Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:20.768724Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:20.969773Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:21.356001Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:21.573912Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:18:21.946683Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:22.469595Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:22.777989Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:22.971715Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:23.347855Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:23.570678Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:23.777732Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:24.091142Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:24.308743Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:24.516218Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:30.281339Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:31.158297Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:31.411712Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:31.680955Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:31.876935Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:32.398659Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:18:32.700836Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:21:50.403368Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:21:51.292015Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:21:51.735882Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:21:52.133971Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:47.258250Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:47.797456Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:48.083964Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:48.343419Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:48.527317Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:49.179209Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:49.451274Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:52.056457Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:52.701500Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:53.017610Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:53.384457Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:22:53.784500Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:49.025030Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:49.489741Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:49.800788Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:50.179842Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:50.726767Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:51.106647Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:51.403842Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:51.680782Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:52.166925Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:52.442725Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:52.619727Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:52.854840Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:53.139019Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:53.430833Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:53.735812Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:53.977843Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:54.193826Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:54.696896Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:26:54.958981Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:07.282562Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:07.652770Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:08.279924Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:08.599946Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:17.721646Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:18.073825Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:18.562962Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:19.118992Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:19.573952Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:19.891663Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:20.304485Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:20.865026Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:27:21.119031Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:34.318204Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:34.617764Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:34.957382Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:35.250282Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:35.504036Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:35.731551Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:36.112495Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:36.391598Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:36.635385Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:36.804205Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:37.086439Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:37.297682Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:44.549170Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:44.980786Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:28:45.297497Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:28:46.724568Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:28:47.039354Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:48.166867Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:29:49.150171Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:29:49.810004Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:50.578849Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:51.614887Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:52.276029Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:52.317720Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:52.357995Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:52.397776Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:53.042913Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:53.329259Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:53.582810Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:53.880527Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:54.164879Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:29:54.494733Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:30:40.839997Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:30:41.137188Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:30:41.524987Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:30:41.758168Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:30:41.949161Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:30:42.224504Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:30:42.586136Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:30:42.864110Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:56.527164Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:57.062843Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:57.610299Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:58.376977Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:58.659991Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:58.916131Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:59.063095Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:59.285981Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:59.449947Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:59.661930Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:59.806747Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:43:59.971308Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:00.136374Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:00.288128Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:00.447773Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:00.589006Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:01.351064Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:44:01.521346Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:44:02.560104Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:44:02.881029Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:03.062494Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:03.758088Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:44:04.380961Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:44:05.005804Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:46:35.401753Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:36.433826Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:36.949897Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:46:37.411834Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:46:37.747882Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:46:38.022938Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:46:40.261079Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:46:40.563972Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:46:40.862061Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:41.480065Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:41.989051Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:42.306972Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:42.562807Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:42.827214Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:43.037210Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:43.697171Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:43.737281Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:43.776776Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:43.817319Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:43.856991Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:43.897281Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:43.937388Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:43.977134Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.017089Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.057000Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.097483Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.137534Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.178477Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.218213Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.257874Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.298252Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.338561Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.379134Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.418899Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.459598Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.499978Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.540113Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.581528Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.621749Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.663150Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.703708Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.743668Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.784141Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.824242Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.863790Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.904424Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:44.944205Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:44.984346Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.023837Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.064096Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.103746Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.144341Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.184608Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.225011Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.264641Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.305412Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.345118Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.385456Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.425108Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.464732Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.505298Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.545186Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.585263Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:46:45.625147Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:46:45.669603Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:07.024390Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:07.566592Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:07.851314Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:08.037407Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:08.370623Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:08.693418Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:09.015120Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:09.353921Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:09.645626Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:10.097636Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:50:10.396536Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:50:10.849539Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:46.741215Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:47.259618Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:47.789848Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:48.589182Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:48.955828Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:49.617358Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:49.657791Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:49.697864Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:49.738314Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:49.778729Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:49.819253Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:49.859509Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:49.900222Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:49.940455Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:49.980582Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.021272Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.060764Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.101318Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.141299Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.183262Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.225437Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.264579Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.305369Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.345389Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.385083Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.425071Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.465138Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.505163Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.545026Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.585492Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.625414Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.665067Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.705128Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.744970Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.785598Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:50.826215Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:50.866103Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:51.419030Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:52.801387Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:53:53.183906Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:53.813012Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:54.133153Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:54.434014Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:54.719534Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:55.226941Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:55.559476Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:53:55.869997Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:56.110040Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:56.770707Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:56.811434Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:56.851644Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:56.890999Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:56.930883Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:56.971096Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.011449Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.051286Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.091267Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.131563Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.172425Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.211981Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.252468Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.292459Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.331845Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.371953Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.412110Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.451832Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.492446Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.532442Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.572555Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.611808Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.652567Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.692305Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.732154Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.772589Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.813118Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.853410Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.893222Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.932528Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:57.973061Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.012935Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.052938Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.093410Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.132913Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.173641Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.214696Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.254715Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.294996Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.334767Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.375332Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.415140Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.455105Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.495695Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.535889Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.575796Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.616408Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.656843Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.697356Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.737189Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.776677Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.817039Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.856946Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.898111Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.938202Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:58.978725Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.019257Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.059216Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.099310Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.139988Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.179072Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.218724Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.259081Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.299461Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.339241Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.379161Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.419357Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.458721Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.499066Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.538886Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.578866Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.620048Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.659570Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.699130Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.739487Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.778892Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.819192Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.859236Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.899530Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.938859Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:53:59.979679Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.020346Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.059951Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.100341Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.140485Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.181310Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.220758Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.261101Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.300910Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.341538Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.382302Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.422211Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.462187Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.502419Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.543485Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.582764Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.622839Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.663285Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.703310Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.742657Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.783054Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.823948Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.864367Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.904135Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.944539Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:00.984009Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.024653Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.065203Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.105362Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.145759Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.186285Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.225764Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.265897Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:54:01.306149Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:56:52.154420Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:56:52.579376Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:56:53.441553Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:56:53.665616Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:56:54.138520Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:54.590519Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:55.079725Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:55.279241Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:55.616582Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:55.848769Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:56.263486Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:56.553131Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:56:56.925766Z  INFO redo::tui: Complete urdadComplete urmomma
+2024-10-03T04:58:15.839611Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:16.470466Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:17.309699Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:17.652427Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:18.056733Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:18.224527Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:18.395271Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:18.546278Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:18.690877Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:18.853666Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:18.919501Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:19.173521Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:19.263551Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:19.485530Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:19.619389Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:19.884547Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:20.050554Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:20.202612Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:20.385470Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:20.509786Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:20.719421Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:20.803560Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:21.062874Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:21.114307Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:21.403261Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:21.608486Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:21.733182Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:21.971446Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:22.119667Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:22.950458Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:23.381601Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:23.855749Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:24.251599Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:24.683415Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:24.917704Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:25.363529Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:25.670854Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:26.218588Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:26.752601Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:27.207847Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:27.573699Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:28.110652Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:28.646347Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:28.967531Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:29.144638Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:29.617924Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:30.125662Z  INFO redo::tui: Incomplete urdadComplete urmomma
+2024-10-03T04:58:30.391754Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:30.899762Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:31.219674Z  INFO redo::tui: Incomplete urfather
+2024-10-03T04:58:31.434568Z  INFO redo::tui: Incomplete urdadComplete urmomma

@@ -9,6 +9,24 @@ pub enum TodoStatus {
     Complete,
 }
 
+impl From<bool> for TodoStatus {
+    fn from(value: bool) -> Self {
+        match value {
+            true => Self::Complete,
+            false => Self::Incomplete,
+        }
+    }
+}
+
+impl TodoStatus {
+    pub fn toggle(&mut self) {
+        match self {
+            Self::Complete => *self = Self::Incomplete,
+            Self::Incomplete => *self = Self::Complete,
+        }
+    }
+}
+
 impl std::fmt::Display for TodoStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let done = match self {
@@ -31,6 +49,16 @@ impl std::fmt::Display for Todo {
     }
 }
 
+impl Todo {
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct TodoList {
     pub name: Option<String>,
@@ -38,6 +66,18 @@ pub struct TodoList {
 }
 
 impl TodoList {
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn len_line(&self, index: usize) -> usize {
+        self.data[index].len()
+    }
+
     pub fn new(name: Option<String>, contents: &str) -> Self {
         match parser::parse(contents) {
             Ok(list) => TodoList { data: list.data, name },
