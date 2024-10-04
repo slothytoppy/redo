@@ -1,3 +1,0 @@
-2024-10-04T05:36:28.629191Z  INFO redo::app: longest_name=18
-2024-10-04T05:36:29.426863Z DEBUG redo::tui: editor move_down: Cursor { y: 1, x: 0 }
-2024-10-04T05:36:29.846994Z DEBUG redo::tui: editor move_up: Cursor { y: 0, x: 0 }
