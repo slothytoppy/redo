@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Viewport {
     x: u16,
     y: u16,

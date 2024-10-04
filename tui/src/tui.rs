@@ -1,10 +1,10 @@
 use std::io::{stdout, Write};
 
-use crossterm::cursor::{MoveTo, MoveToNextLine};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use crossterm::queue;
-use crossterm::style::Print;
-use crossterm::terminal::Clear;
+use ratatui::layout::{Constraint, Layout, Position, Rect};
+use ratatui::style::{Style, Stylize};
+use ratatui::widgets::{Block, List, ListDirection};
+use ratatui::{init, restore, DefaultTerminal, Frame};
 use redo::todo::TodoListCollection;
 use redo::TodoList;
 
@@ -29,6 +29,17 @@ pub struct SelectionBar {
 impl SelectionBar {
     pub fn names(&self) -> &Vec<String> {
         &self.names
+    }
+
+    pub fn draw(&mut self, frame: &mut Frame) {
+        let layout = Layout::horizontal([Constraint::Percentage(20)]);
+        let [selection_area] = layout.areas(frame.area());
+        let list = List::new(self.names.clone())
+            .direction(ListDirection::TopToBottom)
+            .style(Style::default())
+            .red()
+            .block(Block::bordered().style(Style::default().red()));
+        frame.render_widget(list, selection_area);
     }
 }
 
@@ -75,6 +86,18 @@ impl Editor {
 
     pub fn set_list(&mut self, list: &TodoList) {
         self.list = list.clone()
+    }
+
+    pub fn draw(&mut self, frame: &mut Frame) {
+        let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
+        let [_selection_area, editor_area] = layout.areas(frame.area());
+        let todos: Vec<String> = self.list.data.iter().map(|todo| todo.to_string()).collect();
+        let list = List::new(todos)
+            .direction(ListDirection::TopToBottom)
+            .style(Style::default())
+            .red()
+            .block(Block::bordered().style(Style::default().red()));
+        frame.render_widget(list, editor_area);
     }
 }
 
@@ -132,13 +155,16 @@ impl EventHandler for Editor {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Interface {
+    pub collection: TodoListCollection,
+
+    drawable_areas: Vec<Rect>,
     screen_size: Viewport,
     selection_bar: SelectionBar,
     editor: Editor,
     screen_state: ScreenState,
-    pub collection: TodoListCollection,
+    terminal: DefaultTerminal,
 }
 
 impl EventHandler for Interface {
@@ -172,7 +198,10 @@ impl EventHandler for Interface {
 
 impl Interface {
     pub fn new(collection: TodoListCollection) -> Self {
+        let terminal = init();
         Self {
+            drawable_areas: vec![],
+            terminal,
             collection,
             selection_bar: SelectionBar::default(),
             editor: Editor::default(),
@@ -181,8 +210,11 @@ impl Interface {
         }
     }
 
+    pub fn deinit(&self) {
+        restore();
+    }
+
     pub fn set_editor_viewport(&mut self, viewport: Viewport) {
-        self.editor.viewport = viewport;
         self.editor.cursor = cursor::Cursor::new(self.editor.viewport.x(), 0);
     }
 
@@ -218,52 +250,30 @@ impl Interface {
         self.selection_bar.names = names;
     }
 
-    fn draw_selection_screen(&self) {
-        let cursor = Cursor::default();
-        queue!(stdout(), MoveTo(cursor.x, cursor.y)).ok();
-        for (idx, name) in self.selection_bar.names.iter().enumerate() {
-            if idx as u16 > self.selection_bar.viewport.y() {
-                return;
-            }
-            queue!(stdout(), Print(name), MoveToNextLine(1)).ok();
-        }
-    }
-
-    fn draw_main_screen(&self) {
-        for (idx, todo) in self.editor.list().data.iter().enumerate() {
-            if idx as u16 > self.editor.viewport.y() {
-                return;
-            }
-
-            let name = &todo.data;
-            let status = match todo.status {
-                redo::todo::TodoStatus::Complete => "[x] ",
-                redo::todo::TodoStatus::Incomplete => "[ ] ",
-            };
-
-            queue!(
-                std::io::stdout(),
-                MoveTo(self.editor.viewport.x(), idx as u16),
-                Print(status),
-                Print(name),
-            )
-            .expect("printing to stdout somehow failed?????");
-        }
-    }
-
     pub fn draw(&mut self) {
-        queue!(stdout(), Clear(crossterm::terminal::ClearType::All)).ok();
-        self.draw_selection_screen();
-        self.draw_main_screen();
+        _ = self.terminal.draw(|frame| {
+            let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
+            let [_selection_area, editor_area] = layout.areas(frame.area());
 
-        match self.screen_state {
-            ScreenState::Selection => queue!(stdout(), MoveTo(0, self.selection_bar.cursor.y)).ok(),
-            ScreenState::Main => queue!(
-                stdout(),
-                MoveTo(self.editor.cursor.x + self.editor.viewport.x(), self.editor.cursor.y)
-            )
-            .ok(),
-        };
+            self.selection_bar.draw(frame);
+            self.editor.draw(frame);
+
+            match self.screen_state {
+                ScreenState::Selection => {
+                    let x = self.selection_bar.cursor.x + 1;
+                    let y = self.selection_bar.cursor.y + 1;
+                    let position = Position::new(x, y);
+                    frame.set_cursor_position(position);
+                }
+
+                ScreenState::Main => {
+                    let x = self.editor.cursor.x + 1;
+                    let y = self.editor.cursor.y + 1;
+                    let position = Position::new(x + editor_area.x, y);
+                    frame.set_cursor_position(position);
+                }
+            };
+        });
     }
 
     pub fn flush(&mut self) {

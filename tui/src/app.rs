@@ -1,15 +1,12 @@
-use crossterm::cursor::MoveTo;
 use crossterm::event::read;
-use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen,
-};
+use redo::todo::TodoListCollection;
 use redo::{filesystem, parser};
 
 use crate::event::EventHandler;
 use crate::tui::Interface;
 use crate::viewport::Viewport;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct App {
     pub file: String,
     viewport: Viewport,
@@ -18,24 +15,25 @@ pub struct App {
 
 impl App {
     pub fn init(args: std::env::Args) -> Self {
-        let _ = enable_raw_mode();
-
-        let _ = crossterm::execute!(
-            std::io::stdout(),
-            EnterAlternateScreen,
-            Clear(ClearType::All),
-            MoveTo(0, 0)
-        );
+        ratatui::init();
 
         if args.len() <= 1 {
-            return App::default();
+            return App {
+                file: String::default(),
+                viewport: Viewport::default(),
+                interface: Interface::new(TodoListCollection::default()),
+            };
         }
 
         let mut args = args.skip(1);
         let file = match args.next() {
             Some(data) => data,
             None => {
-                return App::default();
+                return App {
+                    file: String::default(),
+                    viewport: Viewport::default(),
+                    interface: Interface::new(TodoListCollection::default()),
+                };
             }
         };
 
@@ -56,8 +54,7 @@ impl App {
     }
 
     pub fn deinit(&self) {
-        let _ = disable_raw_mode();
-        let _ = crossterm::execute!(std::io::stdout(), LeaveAlternateScreen);
+        self.interface.deinit();
         let mut tmp = String::default();
         for list in &self.interface.collection.lists {
             list.data.iter().for_each(|todo| tmp.push_str(&format!("{todo}")));
@@ -87,14 +84,18 @@ impl App {
         let mut longest_name = 0;
         for name in self.interface.collection_names() {
             if name.len() as u16 > longest_name {
-                longest_name += name.len() as u16
+                longest_name = name.len() as u16
             }
         }
 
         self.interface
             .set_selection_viewport(Viewport::new(self.viewport.y(), longest_name));
+
+        longest_name += 1;
         self.interface
-            .set_editor_viewport(Viewport::new(self.viewport.y(), longest_name + 1));
+            .set_editor_viewport(Viewport::new(self.viewport.y(), longest_name));
+
+        tracing::info!(longest_name);
 
         self.interface.draw();
         self.interface.flush();
