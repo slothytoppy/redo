@@ -3,12 +3,10 @@ use redo::{filesystem, parser};
 
 use crate::event::EventHandler;
 use crate::tui::Interface;
-use crate::viewport::Viewport;
 
 #[derive(Debug, Default)]
 pub struct App {
     pub file: String,
-    viewport: Viewport,
     interface: Interface,
 }
 
@@ -32,16 +30,7 @@ impl App {
         let collection = parser::parse_collection(&content).unwrap_or_default();
         let interface = Interface::new(collection);
 
-        let viewport = match crossterm::terminal::window_size() {
-            Ok(size) => Viewport::new(size.columns, size.rows),
-            Err(_) => panic!("can not request window_size"),
-        };
-
-        Self {
-            file,
-            viewport,
-            interface,
-        }
+        Self { file, interface }
     }
 
     pub fn deinit(&self) {
@@ -59,9 +48,8 @@ impl App {
 
         let mut names = vec![];
         for list in &self.interface.collection.lists {
-            if let Some(name) = &list.name {
-                names.push(name.to_string());
-            };
+            let name = &list.title;
+            names.push(name.to_string());
         }
 
         self.interface.change_collection_names(names);

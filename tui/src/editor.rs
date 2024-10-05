@@ -1,7 +1,6 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::Rect;
 use ratatui::style::{Style, Stylize};
-use ratatui::text::Text;
 use ratatui::widgets::{Block, List, ListDirection};
 use ratatui::Frame;
 use redo::TodoList;

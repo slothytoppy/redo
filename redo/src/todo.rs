@@ -61,7 +61,7 @@ impl Todo {
 
 #[derive(Debug, Default, Clone)]
 pub struct TodoList {
-    pub name: Option<String>,
+    pub title: String,
     pub data: Vec<Todo>,
 }
 
@@ -78,10 +78,10 @@ impl TodoList {
         self.data[index].len()
     }
 
-    pub fn new(name: Option<String>, contents: &str) -> Self {
+    pub fn new(title: String, contents: &str) -> Self {
         match parser::parse(contents) {
-            Ok(list) => TodoList { data: list.data, name },
-            Err(..) => TodoList { name, data: vec![] },
+            Ok(list) => TodoList { title, data: list.data },
+            Err(..) => TodoList { title, data: vec![] },
         }
     }
 

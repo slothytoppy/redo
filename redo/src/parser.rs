@@ -44,15 +44,17 @@ pub fn parse(content: &str) -> Result<TodoList, String> {
     if !is_valid(content) {
         return Err(format!("Could not parse because contents was invalid: {content}"));
     }
-    let data = content
-        .lines()
-        .filter(|line| !line.is_empty())
-        .filter(|line| is_valid(line))
-        .map(|line| line[3..].trim().to_string())
+
+    let mut lines = content.lines();
+
+    let title = lines.next().map(Into::into).unwrap_or_default();
+
+    let data = lines
+        .map(|line| parse_todo(line).unwrap_or_default())
         .map(Into::into)
         .collect::<Vec<_>>();
 
-    let list = TodoList { name: None, data };
+    let list = TodoList { title, data };
     Ok(list)
 }
 
@@ -77,7 +79,7 @@ pub fn parse_collection(content: &str) -> Result<TodoListCollection, String> {
         match is_collection(line) {
             true => {
                 let collection_name = line.trim_matches(':');
-                collection.push(TodoList::new(Some(collection_name.to_string()), line));
+                collection.push(TodoList::new(collection_name.to_string(), line));
                 current_collection += 1;
             }
             false => {
@@ -100,6 +102,7 @@ mod test {
     fn parse_collection_test() {
         let content = r#"[workouts]:
         [ ] urmom"#;
+
         let collection = parse_collection(content).expect("");
         assert!(collection.lists.len() == 1);
         //panic!();
