@@ -1,15 +1,14 @@
 use std::io::{stdout, Write};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use ratatui::layout::{Constraint, Layout, Position, Rect};
-use ratatui::style::{Style, Stylize};
-use ratatui::widgets::{Block, List, ListDirection};
-use ratatui::{init, restore, DefaultTerminal, Frame};
+use ratatui::layout::{Constraint, Layout, Position};
+use ratatui::{init, restore, DefaultTerminal};
 use redo::todo::TodoListCollection;
-use redo::TodoList;
 
-use crate::cursor::{self, Cursor, CursorMovement};
+use crate::cursor::{self};
+use crate::editor::Editor;
 use crate::event::EventHandler;
+use crate::selection::SelectionBar;
 use crate::viewport::Viewport;
 
 #[derive(Debug, Default)]
@@ -19,158 +18,38 @@ pub enum ScreenState {
     Main,
 }
 
-#[derive(Debug, Default)]
-pub struct SelectionBar {
-    names: Vec<String>,
-    cursor: Cursor,
-    viewport: Viewport,
-}
-
-impl SelectionBar {
-    pub fn names(&self) -> &Vec<String> {
-        &self.names
-    }
-
-    pub fn draw(&mut self, frame: &mut Frame) {
-        let layout = Layout::horizontal([Constraint::Percentage(20)]);
-        let [selection_area] = layout.areas(frame.area());
-        let list = List::new(self.names.clone())
-            .direction(ListDirection::TopToBottom)
-            .style(Style::default())
-            .red()
-            .block(Block::bordered().style(Style::default().red()));
-        frame.render_widget(list, selection_area);
-    }
-}
-
-impl EventHandler for SelectionBar {
-    type Event = usize;
-
-    fn handle_event(&mut self, event: &Event) -> Option<Self::Event> {
-        if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Up => self.move_up(1),
-                KeyCode::Down => self.move_down(1),
-                KeyCode::Char(' ') => return Some(self.cursor.y as usize),
-
-                _ => {}
-            }
-        }
-        None
-    }
-}
-
-impl CursorMovement for SelectionBar {
-    fn move_up(&mut self, amount: u16) {
-        self.cursor.y = self.cursor.y.saturating_sub(amount);
-        tracing::debug!("selection_bar: move_up {:?}", self.cursor);
-    }
-
-    fn move_down(&mut self, amount: u16) {
-        self.cursor.y = u16::min(self.cursor.y + amount, self.names().len().saturating_sub(1) as u16);
-        tracing::debug!("selection_bar move_down: {:?}", self.cursor);
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct Editor {
-    list: TodoList,
-    cursor: Cursor,
-    viewport: Viewport,
-}
-
-impl Editor {
-    pub fn list(&self) -> &TodoList {
-        &self.list
-    }
-
-    pub fn set_list(&mut self, list: &TodoList) {
-        self.list = list.clone()
-    }
-
-    pub fn draw(&mut self, frame: &mut Frame) {
-        let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
-        let [_selection_area, editor_area] = layout.areas(frame.area());
-        let todos: Vec<String> = self.list.data.iter().map(|todo| todo.to_string()).collect();
-        let list = List::new(todos)
-            .direction(ListDirection::TopToBottom)
-            .style(Style::default())
-            .red()
-            .block(Block::bordered().style(Style::default().red()));
-        frame.render_widget(list, editor_area);
-    }
-}
-
-impl CursorMovement for Editor {
-    fn move_up(&mut self, amount: u16) {
-        self.cursor.y = self.cursor.y.saturating_sub(amount);
-        tracing::debug!("editor move_up: {:?}", self.cursor);
-    }
-
-    fn move_down(&mut self, amount: u16) {
-        self.cursor.y = u16::min(self.cursor.y + amount, self.list.data.len().saturating_sub(1) as u16);
-        tracing::debug!("editor move_down: {:?}", self.cursor);
-    }
-
-    fn move_left(&mut self, amount: u16) {
-        self.cursor.x = self.cursor.x.saturating_sub(amount).min(self.viewport.x());
-        tracing::debug!("editor move_left: {:?}", self.cursor);
-    }
-
-    fn move_right(&mut self, amount: u16) {
-        // padding for the todo status + the space at the end
-        let padding = 3_u16;
-        self.cursor.x = u16::min(
-            self.cursor.x + amount,
-            self.list.len_line(self.cursor.y as usize) as u16 + padding,
-        );
-        tracing::debug!("editor move_right: {:?}", self.cursor);
-    }
-}
-
-impl EventHandler for Editor {
-    type Event = bool;
-
-    fn handle_event(&mut self, event: &Event) -> Option<Self::Event> {
-        if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Esc => {
-                    self.cursor = Cursor::new(self.viewport.x(), 0);
-                    return Some(true);
-                }
-                KeyCode::Up => self.move_up(1),
-                KeyCode::Down => self.move_down(1),
-                KeyCode::Left => self.move_left(1),
-                KeyCode::Right => self.move_right(1),
-                KeyCode::Char('x') => {
-                    if let Some(todo) = self.list.data.get_mut(self.cursor.y as usize) {
-                        todo.status.toggle()
-                    }
-                }
-
-                _ => {}
-            }
-        }
-        None
-    }
-}
-
 #[derive(Debug)]
 pub struct Interface {
     pub collection: TodoListCollection,
 
-    drawable_areas: Vec<Rect>,
+    selected: usize,
     screen_size: Viewport,
     selection_bar: SelectionBar,
+    terminal: DefaultTerminal,
+
     editor: Editor,
     screen_state: ScreenState,
-    terminal: DefaultTerminal,
+}
+
+impl Default for Interface {
+    fn default() -> Self {
+        Self {
+            terminal: init(),
+            collection: TodoListCollection::default(),
+            selected: 0,
+            screen_size: Viewport::default(),
+            selection_bar: SelectionBar::default(),
+            editor: Editor::default(),
+            screen_state: ScreenState::default(),
+        }
+    }
 }
 
 impl EventHandler for Interface {
     type Event = bool;
+    type Input = ();
 
-    fn handle_event(&mut self, event: &Event) -> Option<Self::Event> {
+    fn handle_event(&mut self, event: &Event, _: &Self::Input) -> Option<Self::Event> {
         self.handle_resize(event);
         if self.should_quit(event) {
             return Some(true);
@@ -178,15 +57,18 @@ impl EventHandler for Interface {
 
         match self.screen_state {
             ScreenState::Selection => {
-                if let Some(idx) = self.selection_bar.handle_event(event) {
-                    let list = &self.collection.lists[idx];
-                    self.editor.set_list(list);
+                if let Some(idx) = self.selection_bar.handle_event(event, &()) {
                     self.change_state(ScreenState::Main);
+                    self.selected = idx;
                 }
             }
 
             ScreenState::Main => {
-                if self.editor.handle_event(event).unwrap_or(false) {
+                if self
+                    .editor
+                    .handle_event(event, &self.collection.lists[self.selected])
+                    .unwrap_or(false)
+                {
                     self.change_state(ScreenState::Selection);
                 }
             }
@@ -200,9 +82,10 @@ impl Interface {
     pub fn new(collection: TodoListCollection) -> Self {
         let terminal = init();
         Self {
-            drawable_areas: vec![],
             terminal,
             collection,
+
+            selected: 0,
             selection_bar: SelectionBar::default(),
             editor: Editor::default(),
             screen_size: Viewport::default(),
@@ -210,53 +93,14 @@ impl Interface {
         }
     }
 
-    pub fn deinit(&self) {
-        restore();
-    }
-
-    pub fn set_editor_viewport(&mut self, viewport: Viewport) {
-        self.editor.cursor = cursor::Cursor::new(self.editor.viewport.x(), 0);
-    }
-
-    pub fn set_editor_list(&mut self, list: TodoList) {
-        self.editor.set_list(&list);
-    }
-
-    pub fn get_editor_viewport(&self) -> &Viewport {
-        &self.editor.viewport
-    }
-
-    pub fn set_selection_viewport(&mut self, viewport: Viewport) {
-        self.selection_bar.viewport = viewport;
-    }
-
-    pub fn get_selection_viewport(&self) -> &Viewport {
-        &self.selection_bar.viewport
-    }
-
-    pub fn collection_names(&self) -> &Vec<String> {
-        self.selection_bar.names()
-    }
-
-    pub fn change_state(&mut self, state: ScreenState) {
-        self.screen_state = state;
-    }
-
-    pub fn update_editor_list(&mut self, list: TodoList) {
-        self.editor.list = list;
-    }
-
-    pub fn change_collection_names(&mut self, names: Vec<String>) {
-        self.selection_bar.names = names;
-    }
-
     pub fn draw(&mut self) {
         _ = self.terminal.draw(|frame| {
             let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
-            let [_selection_area, editor_area] = layout.areas(frame.area());
+            let [selection_area, editor_area] = layout.areas(frame.area());
 
-            self.selection_bar.draw(frame);
-            self.editor.draw(frame);
+            self.selection_bar.draw(frame, selection_area);
+            self.editor
+                .draw(frame, editor_area, &self.collection.lists[self.selected]);
 
             match self.screen_state {
                 ScreenState::Selection => {
@@ -274,6 +118,30 @@ impl Interface {
                 }
             };
         });
+    }
+
+    pub fn deinit(&self) {
+        restore();
+    }
+
+    pub fn set_editor_viewport(&mut self) {
+        self.editor.cursor = cursor::Cursor::new(self.editor.viewport.x(), 0);
+    }
+
+    pub fn get_editor_viewport(&self) -> &Viewport {
+        &self.editor.viewport
+    }
+
+    pub fn collection_names(&self) -> &Vec<String> {
+        self.selection_bar.names()
+    }
+
+    pub fn change_state(&mut self, state: ScreenState) {
+        self.screen_state = state;
+    }
+
+    pub fn change_collection_names(&mut self, names: Vec<String>) {
+        self.selection_bar.set_names(names);
     }
 
     pub fn flush(&mut self) {

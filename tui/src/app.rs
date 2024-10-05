@@ -1,12 +1,11 @@
 use crossterm::event::read;
-use redo::todo::TodoListCollection;
 use redo::{filesystem, parser};
 
 use crate::event::EventHandler;
 use crate::tui::Interface;
 use crate::viewport::Viewport;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct App {
     pub file: String,
     viewport: Viewport,
@@ -18,22 +17,14 @@ impl App {
         ratatui::init();
 
         if args.len() <= 1 {
-            return App {
-                file: String::default(),
-                viewport: Viewport::default(),
-                interface: Interface::new(TodoListCollection::default()),
-            };
+            return App::default();
         }
 
         let mut args = args.skip(1);
         let file = match args.next() {
             Some(data) => data,
             None => {
-                return App {
-                    file: String::default(),
-                    viewport: Viewport::default(),
-                    interface: Interface::new(TodoListCollection::default()),
-                };
+                return App::default();
             }
         };
 
@@ -43,7 +34,7 @@ impl App {
 
         let viewport = match crossterm::terminal::window_size() {
             Ok(size) => Viewport::new(size.columns, size.rows),
-            Err(_) => Viewport::default(),
+            Err(_) => panic!("can not request window_size"),
         };
 
         Self {
@@ -75,12 +66,6 @@ impl App {
 
         self.interface.change_collection_names(names);
 
-        let lists = &self.interface.collection.lists;
-        if !lists.is_empty() {
-            let list = lists[0].clone();
-            self.interface.update_editor_list(list);
-        }
-
         let mut longest_name = 0;
         for name in self.interface.collection_names() {
             if name.len() as u16 > longest_name {
@@ -88,14 +73,7 @@ impl App {
             }
         }
 
-        self.interface
-            .set_selection_viewport(Viewport::new(self.viewport.y(), longest_name));
-
-        longest_name += 1;
-        self.interface
-            .set_editor_viewport(Viewport::new(self.viewport.y(), longest_name));
-
-        tracing::info!(longest_name);
+        self.interface.set_editor_viewport();
 
         self.interface.draw();
         self.interface.flush();
@@ -103,7 +81,7 @@ impl App {
         loop {
             let event = read().unwrap();
 
-            if let Some(true) = self.interface.handle_event(&event) {
+            if let Some(true) = self.interface.handle_event(&event, &()) {
                 break;
             }
 

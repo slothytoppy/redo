@@ -5,7 +5,9 @@ use tracing_subscriber::FmtSubscriber;
 
 mod app;
 mod cursor;
+mod editor;
 mod event;
+mod selection;
 mod tui;
 mod viewport;
 

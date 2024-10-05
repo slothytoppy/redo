@@ -9,13 +9,13 @@ pub trait CursorMovement {
     fn move_up(&mut self, amount: u16) {}
 
     #[allow(unused_variables)]
-    fn move_down(&mut self, amount: u16) {}
+    fn move_down(&mut self, amount: u16, max: u16) {}
 
     #[allow(unused_variables)]
     fn move_left(&mut self, amount: u16) {}
 
     #[allow(unused_variables)]
-    fn move_right(&mut self, amount: u16) {}
+    fn move_right(&mut self, amount: u16, max: u16) {}
 }
 
 impl Cursor {
