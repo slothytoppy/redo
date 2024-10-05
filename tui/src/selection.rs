@@ -36,7 +36,7 @@ impl EventHandler for SelectionBar {
     type Event = usize;
     type Input = ();
 
-    fn handle_event(&mut self, event: &Event, _: &Self::Input) -> Option<Self::Event> {
+    fn handle_event(&mut self, event: &Event, _: &mut Self::Input) -> Option<Self::Event> {
         if let Event::Key(key) = event {
             match key.code {
                 KeyCode::Up => self.move_up(1),

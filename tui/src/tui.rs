@@ -49,7 +49,7 @@ impl EventHandler for Interface {
     type Event = bool;
     type Input = ();
 
-    fn handle_event(&mut self, event: &Event, _: &Self::Input) -> Option<Self::Event> {
+    fn handle_event(&mut self, event: &Event, _: &mut Self::Input) -> Option<Self::Event> {
         self.handle_resize(event);
         if self.should_quit(event) {
             return Some(true);
@@ -57,7 +57,7 @@ impl EventHandler for Interface {
 
         match self.screen_state {
             ScreenState::Selection => {
-                if let Some(idx) = self.selection_bar.handle_event(event, &()) {
+                if let Some(idx) = self.selection_bar.handle_event(event, &mut ()) {
                     self.change_state(ScreenState::Main);
                     self.selected = idx;
                 }
@@ -66,7 +66,7 @@ impl EventHandler for Interface {
             ScreenState::Main => {
                 if self
                     .editor
-                    .handle_event(event, &self.collection.lists[self.selected])
+                    .handle_event(event, &mut self.collection.lists[self.selected])
                     .unwrap_or(false)
                 {
                     self.change_state(ScreenState::Selection);
@@ -118,6 +118,20 @@ impl Interface {
                 }
             };
         });
+    }
+
+    pub fn add_todo(&mut self, content: &str) {
+        let list = self.collection.get_mut_todo_list(self.selected);
+        if let Some(list) = list {
+            list.push_str(content)
+        }
+    }
+
+    pub fn remove_todo(&mut self) {
+        let list = self.collection.get_mut_todo_list(self.selected);
+        if let Some(list) = list {
+            list.data.remove(self.editor.cursor.x as usize);
+        }
     }
 
     pub fn deinit(&self) {
