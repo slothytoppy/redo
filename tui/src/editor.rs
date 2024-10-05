@@ -44,13 +44,21 @@ impl EventHandler for Editor {
                 }
 
                 KeyCode::Up => self.move_up(1),
+                KeyCode::Char('k') => self.move_up(1),
+
                 KeyCode::Down => self.move_down(1, list.len().saturating_sub(1) as u16),
+                KeyCode::Char('j') => self.move_up(1),
+
                 KeyCode::Left => self.move_left(1),
+                KeyCode::Char('h') => self.move_up(1),
+
                 KeyCode::Right => {
                     let len_line = list.len_line(self.cursor.y as usize).saturating_sub(1);
                     self.move_right(1, len_line as u16);
                     tracing::info!(len_line);
                 }
+                KeyCode::Char('l') => self.move_up(1),
+
                 KeyCode::Char(' ') => {
                     if let Some(todo) = list.data.get_mut(self.cursor.y as usize) {
                         todo.status.toggle()

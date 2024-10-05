@@ -1,31 +1,41 @@
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 
-pub fn read<P: AsRef<std::path::Path>>(file_name: P) -> String {
-    let mut file = OpenOptions::new()
+use tracing;
+
+pub fn read<P: AsRef<std::path::Path>>(file_name: P) -> Option<String> {
+    let mut buffer = String::default();
+    let file = OpenOptions::new()
         .write(true)
         .read(true)
         .create(true)
         .truncate(false)
-        .open(file_name.as_ref())
-        .expect("file should exist and should be readable");
-    let mut buffer = String::default();
-    let _ = file.read_to_string(&mut buffer);
-    buffer
+        .open(file_name.as_ref());
+
+    if let Ok(mut file) = file {
+        if file.read_to_string(&mut buffer).is_err() {
+            return None;
+        }
+        Some(buffer)
+    } else {
+        None
+    }
 }
 
 pub fn write<P: AsRef<std::path::Path>>(file_name: P, contents: String) -> bool {
     match OpenOptions::new()
-        .read(true)
-        .create_new(true)
-        .truncate(false)
-        .append(true)
+        .create(true)
+        .write(true)
+        .truncate(true)
         .open(file_name.as_ref())
     {
         Ok(mut file) => {
             let _ = file.write(contents.as_bytes());
             true
         }
-        Err(..) => false,
+        Err(e) => {
+            tracing::info!("{:?}", e);
+            false
+        }
     }
 }

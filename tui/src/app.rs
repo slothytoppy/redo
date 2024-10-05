@@ -26,26 +26,36 @@ impl App {
             }
         };
 
-        let content = filesystem::read(&file);
+        let content = filesystem::read(&file).unwrap_or_default();
         let collection = parser::parse_collection(&content).unwrap_or_default();
+
         let interface = Interface::new(collection);
+        tracing::info!(file);
 
         Self { file, interface }
     }
 
     pub fn deinit(&self) {
         self.interface.deinit();
+
         let mut tmp = String::default();
+
         for list in &self.interface.collection.lists {
-            list.data.iter().for_each(|todo| tmp.push_str(&format!("{todo}")));
+            tmp.push_str(&format!("{}:\n", list.title));
+            for todos in &list.data {
+                tmp.push_str(&format!("{} {}\n", todos.status, todos.data));
+            }
         }
-        filesystem::write(&self.file, tmp);
+
+        match filesystem::write(&self.file, tmp) {
+            true => {}
+            false => {
+                tracing::info!("failed to write to file {}", &self.file);
+            }
+        }
     }
 
     pub fn run(&mut self) {
-        let args = std::env::args();
-        Self::init(args);
-
         let mut names = vec![];
         for list in &self.interface.collection.lists {
             let name = &list.title;

@@ -355,6 +355,9 @@ dependencies = [
 [[package]]
 name = "redo"
 version = "0.1.0"
+dependencies = [
+ "tracing",
+]
 
 [[package]]
 name = "redox_syscall"
