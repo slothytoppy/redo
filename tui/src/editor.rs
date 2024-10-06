@@ -74,6 +74,9 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
             if let KeyCode::Char(ch) = key.code {
                 self.push_char(ch)
             }
+            if let KeyCode::Backspace = key.code {
+                self.buffer.pop();
+            }
         }
 
         if let Event::Key(key) = event {

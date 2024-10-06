@@ -2,7 +2,8 @@ use std::io::{stdout, Write};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::layout::{Constraint, Layout, Position};
-use ratatui::{init, restore, DefaultTerminal};
+use ratatui::widgets::Paragraph;
+use ratatui::{init, restore, DefaultTerminal, Frame};
 use redo::todo::TodoListCollection;
 
 use crate::cursor::{self};
@@ -112,9 +113,13 @@ impl Interface {
             let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
             let [selection_area, editor_area] = layout.areas(frame.area());
 
-            self.selection_bar.draw(frame, selection_area);
-            self.editor
-                .draw(frame, editor_area, &self.collection.lists[self.selected]);
+            match &self.collection.lists.get(self.selected) {
+                Some(idx) => {
+                    self.selection_bar.draw(frame, selection_area);
+                    self.editor.draw(frame, editor_area, idx);
+                }
+                None => {}
+            };
 
             match self.screen_state {
                 ScreenState::Selection => {

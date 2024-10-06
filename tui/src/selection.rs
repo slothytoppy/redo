@@ -30,6 +30,19 @@ impl SelectionBar {
             .block(Block::bordered().style(Style::default().red()));
         frame.render_widget(list, selection_area);
     }
+
+    pub fn add_name(&mut self, name: String) {
+        let name = "[".to_string() + &name + "]";
+        self.names.push(name);
+    }
+
+    pub fn remove_name(&mut self, idx: usize) {
+        if self.names.is_empty() {
+            return;
+        }
+        self.names.remove(idx);
+        self.cursor.y = self.cursor.y.saturating_sub(1)
+    }
 }
 
 impl EventHandler<&Vec<String>, usize> for SelectionBar {
@@ -39,6 +52,8 @@ impl EventHandler<&Vec<String>, usize> for SelectionBar {
                 KeyCode::Up => self.move_up(1),
                 KeyCode::Down => self.move_down(1, self.names.len().saturating_sub(1) as u16),
                 KeyCode::Char(' ') => return Some(self.cursor.y as usize),
+                KeyCode::Char('x') => self.remove_name(self.cursor.y as usize),
+                KeyCode::Enter => self.add_name("hello".to_string()),
 
                 _ => {}
             }
