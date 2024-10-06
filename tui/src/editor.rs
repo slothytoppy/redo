@@ -1,7 +1,8 @@
 use crossterm::event::{Event, KeyCode};
-use ratatui::layout::Rect;
-use ratatui::style::{Style, Stylize};
-use ratatui::widgets::{Block, List, ListDirection};
+use ratatui::layout::{Margin, Rect};
+use ratatui::style::{Style, Styled, Stylize};
+use ratatui::text::{Line, Text};
+use ratatui::widgets::{Block, Clear, List, ListDirection, Paragraph};
 use ratatui::Frame;
 use redo::TodoList;
 
@@ -11,8 +12,19 @@ use crate::viewport::Viewport;
 
 #[derive(Debug, Default)]
 pub struct Editor {
+    pub buffer: String,
     pub cursor: Cursor,
     pub viewport: Viewport,
+    pub popup_mode: bool,
+}
+
+#[derive(Debug, Default)]
+pub enum EditorState {
+    #[default]
+    None,
+    Selected,
+    Add(String),
+    Remove(usize),
 }
 
 impl Editor {
@@ -28,19 +40,47 @@ impl Editor {
             .blue()
             .block(Block::bordered().style(Style::default().white()));
         frame.render_widget(todos, editor_area);
+
+        if self.popup_mode {
+            let popup = Block::bordered().style(Style::default()).green();
+            tracing::info!("{:?}", self.buffer);
+            let text = Paragraph::new(&*self.buffer);
+
+            let area = frame.area().inner(Margin {
+                horizontal: 2,
+                vertical: 15,
+            });
+
+            frame.render_widget(Clear, area);
+            frame.render_widget(popup, area);
+            frame.render_widget(
+                text,
+                area.inner(Margin {
+                    horizontal: 1,
+                    vertical: 1,
+                }),
+            );
+        }
+    }
+
+    pub fn push_char(&mut self, c: char) {
+        self.buffer.push(c);
     }
 }
 
-impl EventHandler for Editor {
-    type Event = bool;
-    type Input = TodoList;
+impl EventHandler<&mut TodoList, EditorState> for Editor {
+    fn handle_event(&mut self, event: &Event, list: &mut TodoList) -> Option<EditorState> {
+        if let Event::Key(key) = event {
+            if let KeyCode::Char(ch) = key.code {
+                self.push_char(ch)
+            }
+        }
 
-    fn handle_event(&mut self, event: &Event, list: &mut Self::Input) -> Option<Self::Event> {
         if let Event::Key(key) = event {
             match key.code {
                 KeyCode::Esc => {
                     self.cursor = Cursor::new(self.viewport.x(), 0);
-                    return Some(true);
+                    return Some(EditorState::Selected);
                 }
 
                 KeyCode::Up => self.move_up(1),
@@ -58,6 +98,7 @@ impl EventHandler for Editor {
                     tracing::info!(len_line);
                 }
                 KeyCode::Char('l') => self.move_up(1),
+                KeyCode::Enter => self.popup_mode = !self.popup_mode,
 
                 KeyCode::Char(' ') => {
                     if let Some(todo) = list.data.get_mut(self.cursor.y as usize) {

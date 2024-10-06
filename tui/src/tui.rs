@@ -6,7 +6,7 @@ use ratatui::{init, restore, DefaultTerminal};
 use redo::todo::TodoListCollection;
 
 use crate::cursor::{self};
-use crate::editor::Editor;
+use crate::editor::{Editor, EditorState};
 use crate::event::EventHandler;
 use crate::selection::SelectionBar;
 use crate::viewport::Viewport;
@@ -33,11 +33,15 @@ pub struct Interface {
 
 impl Default for Interface {
     fn default() -> Self {
+        let terminal = init();
+        let screen_size = ratatui::Terminal::size(&terminal).unwrap_or_default();
+        let viewport = Viewport::new(screen_size.height, screen_size.width);
+
         Self {
-            terminal: init(),
+            terminal,
             collection: TodoListCollection::default(),
             selected: 0,
-            screen_size: Viewport::default(),
+            screen_size: viewport,
             selection_bar: SelectionBar::default(),
             editor: Editor::default(),
             screen_state: ScreenState::default(),
@@ -45,11 +49,8 @@ impl Default for Interface {
     }
 }
 
-impl EventHandler for Interface {
-    type Event = bool;
-    type Input = ();
-
-    fn handle_event(&mut self, event: &Event, _: &mut Self::Input) -> Option<Self::Event> {
+impl EventHandler<(), bool> for Interface {
+    fn handle_event(&mut self, event: &Event, _: ()) -> Option<bool> {
         self.handle_resize(event);
         if self.should_quit(event) {
             return Some(true);
@@ -57,20 +58,30 @@ impl EventHandler for Interface {
 
         match self.screen_state {
             ScreenState::Selection => {
-                if let Some(idx) = self.selection_bar.handle_event(event, &mut ()) {
+                if let Some(idx) = self.selection_bar.handle_event(event, &self.collection_names()) {
                     self.change_state(ScreenState::Main);
                     self.selected = idx;
                 }
             }
 
             ScreenState::Main => {
-                if self
+                if self.editor.popup_mode {
+                    if let Event::Key(key) = event {
+                        if let KeyCode::Enter = key.code {
+                            self.collection.lists[self.selected].push_str(&self.editor.buffer);
+                        }
+                    }
+                }
+
+                let result = self
                     .editor
                     .handle_event(event, &mut self.collection.lists[self.selected])
-                    .unwrap_or(false)
-                {
-                    self.change_state(ScreenState::Selection);
-                }
+                    .unwrap_or_default();
+                match result {
+                    EditorState::Selected => self.change_state(ScreenState::Selection),
+                    EditorState::Add(data) => self.collection.lists[self.selected].push_str(&data),
+                    _ => {}
+                };
             }
         };
 
@@ -81,6 +92,9 @@ impl EventHandler for Interface {
 impl Interface {
     pub fn new(collection: TodoListCollection) -> Self {
         let terminal = init();
+        let screen_size = ratatui::Terminal::size(&terminal).unwrap_or_default();
+        let viewport = Viewport::new(screen_size.height, screen_size.width);
+
         Self {
             terminal,
             collection,
@@ -88,7 +102,7 @@ impl Interface {
             selected: 0,
             selection_bar: SelectionBar::default(),
             editor: Editor::default(),
-            screen_size: Viewport::default(),
+            screen_size: viewport,
             screen_state: ScreenState::default(),
         }
     }
@@ -146,8 +160,13 @@ impl Interface {
         &self.editor.viewport
     }
 
-    pub fn collection_names(&self) -> &Vec<String> {
-        self.selection_bar.names()
+    pub fn collection_names(&self) -> Vec<String> {
+        let mut tmp = vec![];
+        self.collection
+            .lists
+            .iter()
+            .for_each(|list| tmp.push(list.title.clone()));
+        tmp
     }
 
     pub fn change_state(&mut self, state: ScreenState) {

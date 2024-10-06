@@ -79,7 +79,7 @@ impl App {
         loop {
             let event = read().unwrap();
 
-            if let Some(true) = self.interface.handle_event(&event, &mut ()) {
+            if let Some(true) = self.interface.handle_event(&event, ()) {
                 break;
             }
 

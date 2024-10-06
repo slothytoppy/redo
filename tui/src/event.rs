@@ -1,8 +1,7 @@
 use crossterm::event::Event;
 
-pub trait EventHandler {
-    type Event;
-    type Input;
-
-    fn handle_event(&mut self, event: &Event, input: &mut Self::Input) -> Option<Self::Event>;
+pub trait EventHandler<Input, Output> {
+    fn handle_event(&mut self, _event: &Event, _input: Input) -> Option<Output> {
+        None
+    }
 }
