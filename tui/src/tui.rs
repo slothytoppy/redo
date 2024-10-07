@@ -79,6 +79,9 @@ impl EventHandler<(), bool> for Interface {
                             self.selected = idx;
                         }
                         SelectionState::Remove(idx) => {
+                            if idx == 0 && self.collection.lists.is_empty() {
+                                return None;
+                            }
                             self.collection.lists.remove(idx);
                         }
                     }
@@ -94,7 +97,12 @@ impl EventHandler<(), bool> for Interface {
                     EditorState::Selected => self.change_state(ScreenState::Selection),
                     EditorState::Add(data) => self.collection.lists[self.selected].push_str(&data),
                     EditorState::Remove(idx) => {
-                        self.collection.lists[self.selected].data.remove(idx);
+                        let list = &mut self.collection.lists[self.selected];
+                        if idx == 0 && list.is_empty() {
+                            self.change_state(ScreenState::Selection);
+                            return None;
+                        }
+                        list.data.remove(idx);
                     }
 
                     _ => {}
