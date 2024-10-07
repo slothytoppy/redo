@@ -9,7 +9,7 @@ use redo::TodoList;
 use crate::cursor::{self};
 use crate::editor::{Editor, EditorState};
 use crate::event::EventHandler;
-use crate::selection::SelectionBar;
+use crate::selection::{SelectionBar, SelectionState};
 use crate::viewport::Viewport;
 
 #[derive(Debug, Default)]
@@ -59,34 +59,33 @@ impl EventHandler<(), bool> for Interface {
 
         match self.screen_state {
             ScreenState::Selection => {
-                if self.selection_bar.adding_mode {
-                    if let Event::Key(key) = event {
-                        if key.code == KeyCode::Enter {
-                            tracing::info!(self.selection_bar.buffer);
-                            assert!(!self.selection_bar.buffer.is_empty());
-                            let title = "[".to_string() + &self.selection_bar.buffer + "]";
-                            self.collection.push(TodoList::new(title, ""));
-                            self.selection_bar.set_names(self.collection_names());
-                            self.selection_bar.buffer.clear();
+                if let Some(state) = self.selection_bar.handle_event(event, ()) {
+                    match state {
+                        SelectionState::Adding => {
+                            if let Event::Key(key) = event {
+                                if key.code == KeyCode::Enter {
+                                    tracing::info!(self.selection_bar.buffer);
+                                    assert!(!self.selection_bar.buffer.is_empty());
+
+                                    let title = "[".to_string() + &self.selection_bar.buffer + "]";
+                                    self.collection.push(TodoList::new(title, ""));
+                                    self.selection_bar.set_names(self.collection_names());
+                                    self.selection_bar.buffer.clear();
+                                }
+                            }
+                        }
+                        SelectionState::Selected(idx) => {
+                            self.change_state(ScreenState::Main);
+                            self.selected = idx;
+                        }
+                        SelectionState::Remove(idx) => {
+                            self.collection.lists.remove(idx);
                         }
                     }
-                }
-
-                if let Some(idx) = self.selection_bar.handle_event(event, ()) {
-                    self.change_state(ScreenState::Main);
-                    self.selected = idx;
                 }
             }
 
             ScreenState::Main => {
-                if self.editor.popup_mode {
-                    if let Event::Key(key) = event {
-                        if let KeyCode::Enter = key.code {
-                            self.collection.lists[self.selected].push_str(&self.editor.buffer);
-                        }
-                    }
-                }
-
                 let result = self
                     .editor
                     .handle_event(event, &mut self.collection.lists[self.selected])
@@ -94,6 +93,10 @@ impl EventHandler<(), bool> for Interface {
                 match result {
                     EditorState::Selected => self.change_state(ScreenState::Selection),
                     EditorState::Add(data) => self.collection.lists[self.selected].push_str(&data),
+                    EditorState::Remove(idx) => {
+                        self.collection.lists[self.selected].data.remove(idx);
+                    }
+
                     _ => {}
                 };
             }

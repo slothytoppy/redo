@@ -15,7 +15,8 @@ pub struct Editor {
     pub buffer: String,
     pub cursor: Cursor,
     pub viewport: Viewport,
-    pub popup_mode: bool,
+
+    popup_mode: bool,
 }
 
 #[derive(Debug, Default)]
@@ -72,6 +73,9 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
     fn handle_event(&mut self, event: &Event, list: &mut TodoList) -> Option<EditorState> {
         if self.popup_mode {
             if let Event::Key(key) = event {
+                if let KeyCode::Esc = key.code {
+                    self.popup_mode = !self.popup_mode;
+                }
                 if let KeyCode::Char(ch) = key.code {
                     self.push_char(ch)
                 }
@@ -103,7 +107,18 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
                     tracing::info!(len_line);
                 }
                 KeyCode::Char('l') => self.move_up(1),
-                KeyCode::Enter => self.popup_mode = !self.popup_mode,
+                KeyCode::Enter => {
+                    if self.popup_mode {
+                        self.popup_mode = !self.popup_mode;
+                        return Some(EditorState::Add(self.buffer.clone()));
+                    }
+                    self.popup_mode = !self.popup_mode
+                }
+                KeyCode::Char('x') => {
+                    let state = Some(EditorState::Remove(self.cursor.y as usize));
+                    self.cursor.y = self.cursor.y.saturating_sub(1);
+                    return state;
+                }
 
                 KeyCode::Char(' ') => {
                     if let Some(todo) = list.data.get_mut(self.cursor.y as usize) {

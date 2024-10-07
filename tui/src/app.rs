@@ -30,7 +30,6 @@ impl App {
         let collection = parser::parse_collection(&content).unwrap_or_default();
 
         let interface = Interface::new(collection);
-        tracing::info!(file);
 
         Self { file, interface }
     }
@@ -47,44 +46,25 @@ impl App {
             }
         }
 
-        match filesystem::write(&self.file, tmp) {
-            true => {}
-            false => {
-                tracing::info!("failed to write to file {}", &self.file);
-            }
+        if !filesystem::write(&self.file, tmp) {
+            tracing::info!("failed to write to file {}", &self.file);
         }
     }
 
     pub fn run(&mut self) {
-        let mut names = vec![];
-        for list in &self.interface.collection.lists {
-            let name = &list.title;
-            names.push(name.to_string());
-        }
-
+        let names = self.interface.collection_names();
         self.interface.change_collection_names(names);
-
-        let mut longest_name = 0;
-        for name in self.interface.collection_names() {
-            if name.len() as u16 > longest_name {
-                longest_name = name.len() as u16
-            }
-        }
 
         self.interface.set_editor_viewport();
 
-        self.interface.draw();
-        self.interface.flush();
-
         loop {
+            self.interface.draw();
+            self.interface.flush();
             let event = read().unwrap();
 
             if let Some(true) = self.interface.handle_event(&event, ()) {
                 break;
             }
-
-            self.interface.draw();
-            self.interface.flush();
         }
         self.deinit();
     }

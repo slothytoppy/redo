@@ -11,16 +11,19 @@ use crate::event::EventHandler;
 pub struct SelectionBar {
     pub cursor: Cursor,
     pub buffer: String,
-    pub adding_mode: bool,
 
+    adding_mode: bool,
     names: Vec<String>,
 }
 
-impl SelectionBar {
-    pub fn names(&self) -> &Vec<String> {
-        &self.names
-    }
+#[derive(Debug)]
+pub enum SelectionState {
+    Selected(usize),
+    Adding,
+    Remove(usize),
+}
 
+impl SelectionBar {
     pub fn set_names(&mut self, names: Vec<String>) {
         self.names = names
     }
@@ -35,7 +38,7 @@ impl SelectionBar {
     }
 
     pub fn remove_name(&mut self, idx: usize) {
-        if self.names.is_empty() {
+        if self.names.is_empty() || idx > self.names.len() {
             return;
         }
         self.names.remove(idx);
@@ -43,22 +46,42 @@ impl SelectionBar {
     }
 }
 
-impl EventHandler<(), usize> for SelectionBar {
-    fn handle_event(&mut self, event: &Event, _: ()) -> Option<usize> {
+impl EventHandler<(), SelectionState> for SelectionBar {
+    fn handle_event(&mut self, event: &Event, _: ()) -> Option<SelectionState> {
         if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Up => self.move_up(1),
-                KeyCode::Down => self.move_down(1, self.names.len().saturating_sub(1) as u16),
-                KeyCode::Char(' ') => return Some(self.cursor.y as usize),
-                KeyCode::Char('x') => self.remove_name(self.cursor.y as usize),
-                KeyCode::Char(ch) => {
+            if self.adding_mode {
+                if let KeyCode::Char(ch) = key.code {
                     if self.adding_mode {
                         self.buffer.push(ch);
                     }
+                    return None;
+                }
+            }
+
+            match key.code {
+                KeyCode::Up => self.move_up(1),
+                KeyCode::Down => self.move_down(1, self.names.len().saturating_sub(1) as u16),
+                KeyCode::Char(' ') => return Some(SelectionState::Selected(self.cursor.y as usize)),
+                KeyCode::Char('x') => {
+                    let state = Some(SelectionState::Remove(self.cursor.y as usize));
+                    self.remove_name(self.cursor.y as usize);
+                    if self.cursor.y as usize > self.names.len() - 1 {
+                        self.cursor.y = self.cursor.y.saturating_sub(1);
+                    }
+                    return state;
+                }
+                KeyCode::Enter => {
+                    if self.adding_mode {
+                        self.adding_mode = false;
+                        return Some(SelectionState::Adding);
+                    }
+                    self.adding_mode = true;
                 }
 
-                KeyCode::Enter => {
-                    self.adding_mode = !self.adding_mode;
+                KeyCode::Esc => {
+                    if self.adding_mode {
+                        self.adding_mode = false
+                    }
                 }
 
                 _ => {}
