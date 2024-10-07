@@ -70,12 +70,14 @@ impl Editor {
 
 impl EventHandler<&mut TodoList, EditorState> for Editor {
     fn handle_event(&mut self, event: &Event, list: &mut TodoList) -> Option<EditorState> {
-        if let Event::Key(key) = event {
-            if let KeyCode::Char(ch) = key.code {
-                self.push_char(ch)
-            }
-            if let KeyCode::Backspace = key.code {
-                self.buffer.pop();
+        if self.popup_mode {
+            if let Event::Key(key) = event {
+                if let KeyCode::Char(ch) = key.code {
+                    self.push_char(ch)
+                }
+                if let KeyCode::Backspace = key.code {
+                    self.buffer.pop();
+                }
             }
         }
 

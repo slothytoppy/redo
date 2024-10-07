@@ -9,8 +9,11 @@ use crate::event::EventHandler;
 
 #[derive(Debug, Default)]
 pub struct SelectionBar {
-    names: Vec<String>,
     pub cursor: Cursor,
+    pub buffer: String,
+    pub adding_mode: bool,
+
+    names: Vec<String>,
 }
 
 impl SelectionBar {
@@ -31,11 +34,6 @@ impl SelectionBar {
         frame.render_widget(list, selection_area);
     }
 
-    pub fn add_name(&mut self, name: String) {
-        let name = "[".to_string() + &name + "]";
-        self.names.push(name);
-    }
-
     pub fn remove_name(&mut self, idx: usize) {
         if self.names.is_empty() {
             return;
@@ -45,15 +43,23 @@ impl SelectionBar {
     }
 }
 
-impl EventHandler<&Vec<String>, usize> for SelectionBar {
-    fn handle_event(&mut self, event: &Event, _: &Vec<String>) -> Option<usize> {
+impl EventHandler<(), usize> for SelectionBar {
+    fn handle_event(&mut self, event: &Event, _: ()) -> Option<usize> {
         if let Event::Key(key) = event {
             match key.code {
                 KeyCode::Up => self.move_up(1),
                 KeyCode::Down => self.move_down(1, self.names.len().saturating_sub(1) as u16),
                 KeyCode::Char(' ') => return Some(self.cursor.y as usize),
                 KeyCode::Char('x') => self.remove_name(self.cursor.y as usize),
-                KeyCode::Enter => self.add_name("hello".to_string()),
+                KeyCode::Char(ch) => {
+                    if self.adding_mode {
+                        self.buffer.push(ch);
+                    }
+                }
+
+                KeyCode::Enter => {
+                    self.adding_mode = !self.adding_mode;
+                }
 
                 _ => {}
             }

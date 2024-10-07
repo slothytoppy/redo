@@ -2,9 +2,9 @@ use std::io::{stdout, Write};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::layout::{Constraint, Layout, Position};
-use ratatui::widgets::Paragraph;
-use ratatui::{init, restore, DefaultTerminal, Frame};
+use ratatui::{init, restore, DefaultTerminal};
 use redo::todo::TodoListCollection;
+use redo::TodoList;
 
 use crate::cursor::{self};
 use crate::editor::{Editor, EditorState};
@@ -59,7 +59,20 @@ impl EventHandler<(), bool> for Interface {
 
         match self.screen_state {
             ScreenState::Selection => {
-                if let Some(idx) = self.selection_bar.handle_event(event, &self.collection_names()) {
+                if self.selection_bar.adding_mode {
+                    if let Event::Key(key) = event {
+                        if key.code == KeyCode::Enter {
+                            tracing::info!(self.selection_bar.buffer);
+                            assert!(!self.selection_bar.buffer.is_empty());
+                            let title = "[".to_string() + &self.selection_bar.buffer + "]";
+                            self.collection.push(TodoList::new(title, ""));
+                            self.selection_bar.set_names(self.collection_names());
+                            self.selection_bar.buffer.clear();
+                        }
+                    }
+                }
+
+                if let Some(idx) = self.selection_bar.handle_event(event, ()) {
                     self.change_state(ScreenState::Main);
                     self.selected = idx;
                 }
