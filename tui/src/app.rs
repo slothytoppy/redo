@@ -2,7 +2,7 @@ use crossterm::event::read;
 use redo::{filesystem, parser};
 
 use crate::event::EventHandler;
-use crate::tui::Interface;
+use crate::tui::{Interface, InterfaceState};
 
 #[derive(Debug, Default)]
 pub struct App {
@@ -62,10 +62,14 @@ impl App {
             self.interface.flush();
             let event = read().unwrap();
 
-            if let Some(true) = self.interface.handle_event(&event, ()) {
+            if let Some(InterfaceState::Quit(str)) = self.interface.handle_event(&event, ()) {
+                self.deinit();
+                if let Some(str) = str {
+                    eprintln!("{}", str);
+                    panic!();
+                }
                 break;
             }
         }
-        self.deinit();
     }
 }

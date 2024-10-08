@@ -9,9 +9,9 @@ use crate::event::EventHandler;
 
 #[derive(Debug, Default)]
 pub struct SelectionBar {
-    pub cursor: Cursor,
     pub buffer: String,
 
+    cursor: Cursor,
     adding_mode: bool,
     names: Vec<String>,
 }
@@ -21,6 +21,7 @@ pub enum SelectionState {
     Selected(usize),
     Adding,
     Remove(usize),
+    Show(usize),
 }
 
 impl SelectionBar {
@@ -44,6 +45,10 @@ impl SelectionBar {
         self.names.remove(idx);
         self.cursor.y = self.cursor.y.saturating_sub(1)
     }
+
+    pub fn cursor_pos(&self) -> (u16, u16) {
+        (self.cursor.y, self.cursor.x)
+    }
 }
 
 impl EventHandler<(), SelectionState> for SelectionBar {
@@ -59,9 +64,19 @@ impl EventHandler<(), SelectionState> for SelectionBar {
             }
 
             match key.code {
-                KeyCode::Up => self.move_up(1),
-                KeyCode::Down => self.move_down(1, self.names.len().saturating_sub(1) as u16),
-                KeyCode::Char(' ') => return Some(SelectionState::Selected(self.cursor.y as usize)),
+                KeyCode::Up => {
+                    self.move_up(1);
+                    return Some(SelectionState::Show(self.cursor.y as usize));
+                }
+                KeyCode::Down => {
+                    self.move_down(1, self.names.len().saturating_sub(1) as u16);
+                    return Some(SelectionState::Show(self.cursor.y as usize));
+                }
+                KeyCode::Char(' ') => {
+                    if !self.names.is_empty() {
+                        return Some(SelectionState::Selected(self.cursor.y as usize));
+                    }
+                }
                 KeyCode::Char('x') => {
                     let state = Some(SelectionState::Remove(self.cursor.y as usize));
                     self.remove_name(self.cursor.y as usize);

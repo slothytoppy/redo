@@ -29,11 +29,13 @@ pub enum EditorState {
 }
 
 impl Editor {
-    pub fn draw(&mut self, frame: &mut Frame, editor_area: Rect, list: &TodoList) {
+    pub fn draw(&mut self, frame: &mut Frame, editor_area: Rect, list: Option<&TodoList>) {
         let mut todos_vec = vec![];
-        list.data.iter().for_each(|todo| {
-            todos_vec.push(todo.status.to_string() + &todo.data);
-        });
+        if let Some(list) = list {
+            list.data.iter().for_each(|todo| {
+                todos_vec.push(todo.status.to_string() + " " + &todo.data);
+            });
+        };
 
         let todos = List::new(todos_vec)
             .direction(ListDirection::TopToBottom)

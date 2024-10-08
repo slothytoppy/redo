@@ -5,17 +5,13 @@ pub struct Cursor {
 }
 
 pub trait CursorMovement {
-    #[allow(unused_variables)]
-    fn move_up(&mut self, amount: u16) {}
+    fn move_up(&mut self, _amount: u16) {}
 
-    #[allow(unused_variables)]
-    fn move_down(&mut self, amount: u16, max: u16) {}
+    fn move_down(&mut self, _amount: u16, _max: u16) {}
 
-    #[allow(unused_variables)]
-    fn move_left(&mut self, amount: u16) {}
+    fn move_left(&mut self, _amount: u16) {}
 
-    #[allow(unused_variables)]
-    fn move_right(&mut self, amount: u16, max: u16) {}
+    fn move_right(&mut self, _amount: u16, _max: u16) {}
 }
 
 impl Cursor {

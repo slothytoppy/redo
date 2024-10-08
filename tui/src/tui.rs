@@ -50,22 +50,34 @@ impl Default for Interface {
     }
 }
 
-impl EventHandler<(), bool> for Interface {
-    fn handle_event(&mut self, event: &Event, _: ()) -> Option<bool> {
+pub enum InterfaceState {
+    Quit(Option<String>),
+}
+
+impl EventHandler<(), InterfaceState> for Interface {
+    fn handle_event(&mut self, event: &Event, _: ()) -> Option<InterfaceState> {
         self.handle_resize(event);
         if self.should_quit(event) {
-            return Some(true);
+            return Some(InterfaceState::Quit(None));
         }
 
         match self.screen_state {
             ScreenState::Selection => {
                 if let Some(state) = self.selection_bar.handle_event(event, ()) {
                     match state {
+                        SelectionState::Show(idx) => {
+                            self.selected = idx;
+                        }
                         SelectionState::Adding => {
                             if let Event::Key(key) = event {
                                 if key.code == KeyCode::Enter {
-                                    tracing::info!(self.selection_bar.buffer);
-                                    assert!(!self.selection_bar.buffer.is_empty());
+                                    // asserts that if you've pressed enter then enter again that
+                                    // you've filled the buffer with at least a char
+                                    // otherwise it trips the assert
+                                    if self.selection_bar.buffer.is_empty() {
+                                        return Some(InterfaceState::Quit(Some("Error: Enter was pressed twice, the app assumes that you've pressed at least one key in order to fill up the buffer to make a todo list".to_string())));
+                                    }
+                                    //assert!(!self.selection_bar.buffer.is_empty());
 
                                     let title = "[".to_string() + &self.selection_bar.buffer + "]";
                                     self.collection.push(TodoList::new(title, ""));
@@ -137,19 +149,15 @@ impl Interface {
             let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
             let [selection_area, editor_area] = layout.areas(frame.area());
 
-            match &self.collection.lists.get(self.selected) {
-                Some(idx) => {
-                    self.selection_bar.draw(frame, selection_area);
-                    self.editor.draw(frame, editor_area, idx);
-                }
-                None => {}
-            };
+            let list = self.collection.lists.get(self.selected);
+            self.editor.draw(frame, editor_area, list);
+            self.selection_bar.draw(frame, selection_area);
 
             match self.screen_state {
                 ScreenState::Selection => {
-                    let x = self.selection_bar.cursor.x + 1;
-                    let y = self.selection_bar.cursor.y + 1;
-                    let position = Position::new(x, y);
+                    // have to do x+1, else it puts the cursor at | instead of [
+                    let (y, x) = self.selection_bar.cursor_pos();
+                    let position = Position::new(x + 1, y + 1);
                     frame.set_cursor_position(position);
                 }
 
