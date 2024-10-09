@@ -1,7 +1,6 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::{Margin, Rect};
-use ratatui::style::{Style, Styled, Stylize};
-use ratatui::text::{Line, Text};
+use ratatui::style::{Style, Stylize};
 use ratatui::widgets::{Block, Clear, List, ListDirection, Paragraph};
 use ratatui::Frame;
 use redo::TodoList;
@@ -16,6 +15,7 @@ pub struct Editor {
     pub cursor: Cursor,
     pub viewport: Viewport,
 
+    scroll: u16,
     popup_mode: bool,
 }
 
@@ -32,9 +32,14 @@ impl Editor {
     pub fn draw(&mut self, frame: &mut Frame, editor_area: Rect, list: Option<&TodoList>) {
         let mut todos_vec = vec![];
         if let Some(list) = list {
-            list.data.iter().for_each(|todo| {
-                todos_vec.push(todo.status.to_string() + " " + &todo.data);
-            });
+            for item in list
+                .data
+                .iter()
+                .skip(self.scroll as usize)
+                .take(self.viewport.y() as usize)
+            {
+                todos_vec.push(item.status.to_string() + " " + &item.data);
+            }
         };
 
         let todos = List::new(todos_vec)
@@ -90,14 +95,16 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
         if let Event::Key(key) = event {
             match key.code {
                 KeyCode::Esc => {
-                    self.cursor = Cursor::new(self.viewport.x(), 0);
+                    self.cursor = Cursor::new(0, 0);
                     return Some(EditorState::Selected);
                 }
 
                 KeyCode::Up => self.move_up(1),
                 KeyCode::Char('k') => self.move_up(1),
 
-                KeyCode::Down => self.move_down(1, list.len().saturating_sub(1) as u16),
+                KeyCode::Down => {
+                    self.move_down(1, list.len() as u16);
+                }
                 KeyCode::Char('j') => self.move_up(1),
 
                 KeyCode::Left => self.move_left(1),
@@ -137,18 +144,26 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
 
 impl CursorMovement for Editor {
     fn move_up(&mut self, amount: u16) {
+        if self.cursor.y == 0 {
+            self.scroll = self.scroll.saturating_sub(1);
+        }
         self.cursor.y = self.cursor.y.saturating_sub(amount);
-        tracing::debug!("editor move_up: {:?}", self.cursor);
+        //tracing::debug!("editor move_up: {:?}", self.cursor);
     }
 
     fn move_down(&mut self, amount: u16, max: u16) {
-        self.cursor.y = u16::min(self.cursor.y + amount, max);
-
-        tracing::debug!("editor move_down: {:?}", self.cursor);
+        let min = u16::min(max, self.viewport.y());
+        if self.cursor.y + amount < min - 1 {
+            self.cursor.y += amount;
+        }
+        if self.cursor.y >= self.viewport.y() - 2 && self.cursor.y + self.scroll <= max - 1 {
+            self.scroll += 1;
+        }
+        tracing::info!("cursor {:?} scroll: {:?}", self.cursor, self.scroll);
     }
 
     fn move_left(&mut self, amount: u16) {
-        self.cursor.x = self.cursor.x.saturating_sub(amount).min(self.viewport.x());
+        self.cursor.x = self.cursor.x.saturating_sub(amount).min(0);
         tracing::debug!("editor move_left: {:?}", self.cursor);
     }
 

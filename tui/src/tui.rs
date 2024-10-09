@@ -37,14 +37,15 @@ impl Default for Interface {
         let terminal = init();
         let screen_size = ratatui::Terminal::size(&terminal).unwrap_or_default();
         let viewport = Viewport::new(screen_size.height, screen_size.width);
+        let editor = Editor::default();
 
         Self {
             terminal,
-            collection: TodoListCollection::default(),
+            editor,
             selected: 0,
             screen_size: viewport,
+            collection: TodoListCollection::default(),
             selection_bar: SelectionBar::default(),
-            editor: Editor::default(),
             screen_state: ScreenState::default(),
         }
     }
@@ -131,6 +132,8 @@ impl Interface {
         let terminal = init();
         let screen_size = ratatui::Terminal::size(&terminal).unwrap_or_default();
         let viewport = Viewport::new(screen_size.height, screen_size.width);
+        let mut editor = Editor::default();
+        editor.viewport = viewport;
 
         Self {
             terminal,
@@ -138,7 +141,7 @@ impl Interface {
 
             selected: 0,
             selection_bar: SelectionBar::default(),
-            editor: Editor::default(),
+            editor,
             screen_size: viewport,
             screen_state: ScreenState::default(),
         }
@@ -190,11 +193,11 @@ impl Interface {
     }
 
     pub fn set_editor_viewport(&mut self) {
-        self.editor.cursor = cursor::Cursor::new(self.editor.viewport.x(), 0);
+        self.editor.cursor = cursor::Cursor::new(self.screen_size.x(), 0);
     }
 
     pub fn get_editor_viewport(&self) -> &Viewport {
-        &self.editor.viewport
+        &self.screen_size
     }
 
     pub fn collection_names(&self) -> Vec<String> {
