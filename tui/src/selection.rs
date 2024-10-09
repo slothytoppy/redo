@@ -1,17 +1,20 @@
 use crossterm::event::{Event, KeyCode};
-use ratatui::layout::Rect;
+use ratatui::layout::{Margin, Rect};
 use ratatui::style::{Style, Stylize};
-use ratatui::widgets::{Block, List, ListDirection};
+use ratatui::widgets::{Block, Clear, List, ListDirection, Paragraph};
 use ratatui::Frame;
 
 use crate::cursor::{Cursor, CursorMovement};
 use crate::event::EventHandler;
+use crate::viewport::Viewport;
 
 #[derive(Debug, Default)]
 pub struct SelectionBar {
     pub buffer: String,
+    pub viewport: Viewport,
 
     cursor: Cursor,
+    scroll: u16,
     adding_mode: bool,
     names: Vec<String>,
 }
@@ -30,12 +33,43 @@ impl SelectionBar {
     }
 
     pub fn draw(&mut self, frame: &mut Frame, selection_area: Rect) {
-        let list = List::new(self.names.clone())
+        let mut names_vec = vec![];
+        for item in self
+            .names
+            .iter()
+            .skip(self.scroll as usize)
+            .take(self.viewport.y() as usize)
+        {
+            names_vec.push(item.clone());
+        }
+
+        let list = List::new(names_vec)
             .direction(ListDirection::TopToBottom)
             .style(Style::default())
             .red()
             .block(Block::bordered().style(Style::default().red()));
         frame.render_widget(list, selection_area);
+
+        if self.adding_mode {
+            let popup = Block::bordered().style(Style::default()).blue();
+            tracing::info!("{:?}", self.buffer);
+            let text = Paragraph::new(&*self.buffer);
+
+            let area = frame.area().inner(Margin {
+                horizontal: 2,
+                vertical: 15,
+            });
+
+            frame.render_widget(Clear, area);
+            frame.render_widget(popup, area);
+            frame.render_widget(
+                text,
+                area.inner(Margin {
+                    horizontal: 1,
+                    vertical: 1,
+                }),
+            );
+        }
     }
 
     pub fn remove_name(&mut self, idx: usize) {
@@ -108,12 +142,24 @@ impl EventHandler<(), SelectionState> for SelectionBar {
 
 impl CursorMovement for SelectionBar {
     fn move_up(&mut self, amount: u16) {
+        if self.cursor.y == 0 {
+            self.scroll = self.scroll.saturating_sub(1);
+        }
         self.cursor.y = self.cursor.y.saturating_sub(amount);
         tracing::debug!("selection_bar: move_up {:?}", self.cursor);
     }
 
     fn move_down(&mut self, amount: u16, max: u16) {
         self.cursor.y = u16::min(self.cursor.y + amount, max);
+        let min = u16::min(max, self.viewport.y());
+        if self.cursor.y + amount < min.saturating_sub(1) {
+            self.cursor.y += amount;
+        }
+        if self.cursor.y >= self.viewport.y().saturating_sub(2) && self.cursor.y + self.scroll <= max.saturating_sub(1)
+        {
+            self.scroll += 1;
+        }
+
         tracing::debug!("selection_bar move_down: {:?}", self.cursor);
     }
 }

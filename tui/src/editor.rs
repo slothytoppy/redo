@@ -148,7 +148,7 @@ impl CursorMovement for Editor {
             self.scroll = self.scroll.saturating_sub(1);
         }
         self.cursor.y = self.cursor.y.saturating_sub(amount);
-        //tracing::debug!("editor move_up: {:?}", self.cursor);
+        tracing::debug!("editor move_up: {:?}", self.cursor);
     }
 
     fn move_down(&mut self, amount: u16, max: u16) {

@@ -37,15 +37,19 @@ impl Default for Interface {
         let terminal = init();
         let screen_size = ratatui::Terminal::size(&terminal).unwrap_or_default();
         let viewport = Viewport::new(screen_size.height, screen_size.width);
-        let editor = Editor::default();
+        let mut editor = Editor::default();
+        let mut selection_bar = SelectionBar::default();
+
+        editor.viewport = viewport;
+        selection_bar.viewport = viewport;
 
         Self {
             terminal,
             editor,
+            selection_bar,
             selected: 0,
             screen_size: viewport,
             collection: TodoListCollection::default(),
-            selection_bar: SelectionBar::default(),
             screen_state: ScreenState::default(),
         }
     }
@@ -134,14 +138,21 @@ impl Interface {
         let viewport = Viewport::new(screen_size.height, screen_size.width);
         let mut editor = Editor::default();
         editor.viewport = viewport;
+        let mut selection_bar = SelectionBar::default();
+        selection_bar.viewport = viewport;
+
+        let mut names = vec![];
+        // this clone isnt good, maybe passing Vec<&String> is better or doing something else
+        collection.lists.iter().for_each(|list| names.push(list.title.clone()));
+        selection_bar.set_names(names);
 
         Self {
             terminal,
             collection,
+            editor,
+            selection_bar,
 
             selected: 0,
-            selection_bar: SelectionBar::default(),
-            editor,
             screen_size: viewport,
             screen_state: ScreenState::default(),
         }
