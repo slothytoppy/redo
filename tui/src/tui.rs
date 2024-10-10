@@ -32,6 +32,77 @@ pub struct Interface {
     screen_state: ScreenState,
 }
 
+impl Interface {
+    pub fn handle_selection_bar(&mut self, event: &Event) -> Option<InterfaceState> {
+        if let Some(state) = self.selection_bar.handle_event(event, ()) {
+            match state {
+                SelectionState::Show(idx) => {
+                    self.selected = idx;
+                }
+                SelectionState::Adding => {
+                    if let Event::Key(key) = event {
+                        if key.code == KeyCode::Enter {
+                            // asserts that if you've pressed enter then enter again that
+                            // you've filled the buffer with at least a char
+                            // otherwise it trips the assert
+                            if self.selection_bar.buffer.is_empty() {
+                                let message="Error: Enter was pressed twice, the app assumes that you've pressed at least one key in order to fill up the buffer to make a todo list".to_string();
+                                return Some(InterfaceState::Quit(Err(message)));
+                            }
+
+                            let title = "[".to_string() + &self.selection_bar.buffer + "]";
+                            self.collection.push(TodoList::new(title, ""));
+                            self.selection_bar.set_names(self.collection_names());
+                            self.selection_bar.buffer.clear();
+                        }
+                    }
+                }
+                SelectionState::Selected(idx) => {
+                    if !self.collection.lists[self.selected].is_empty() {
+                        self.change_state(ScreenState::Main);
+                        self.selected = idx;
+                    }
+                }
+                SelectionState::Remove(idx) => {
+                    if idx == 0 && self.collection.lists.is_empty() {
+                        return None;
+                    }
+                    self.collection.lists.remove(idx);
+                }
+            };
+        };
+        None
+    }
+
+    pub fn handle_editor(&mut self, event: &Event) -> Option<InterfaceState> {
+        let result = self
+            .editor
+            .handle_event(event, &mut self.collection.lists[self.selected])
+            .unwrap_or_default();
+        match result {
+            EditorState::Selected => {
+                if !self.collection.lists[self.selected].is_empty() {
+                    self.change_state(ScreenState::Selection);
+                }
+                tracing::info!("Selected: {:?}", self.collection.lists[self.selected]);
+            }
+            EditorState::Add(data) => self.collection.lists[self.selected].push_str(&data),
+            EditorState::Remove(idx) => {
+                let list = &mut self.collection.lists[self.selected];
+                if idx == 0 && list.is_empty() {
+                    self.change_state(ScreenState::Selection);
+                    return None;
+                }
+                list.data.remove(idx);
+            }
+            EditorState::None => {
+                self.change_state(ScreenState::Selection);
+            }
+        };
+        None
+    }
+}
+
 impl Default for Interface {
     fn default() -> Self {
         let terminal = init();
@@ -56,75 +127,19 @@ impl Default for Interface {
 }
 
 pub enum InterfaceState {
-    Quit(Option<String>),
+    Quit(Result<(), String>),
 }
 
 impl EventHandler<(), InterfaceState> for Interface {
     fn handle_event(&mut self, event: &Event, _: ()) -> Option<InterfaceState> {
         self.handle_resize(event);
         if self.should_quit(event) {
-            return Some(InterfaceState::Quit(None));
+            return Some(InterfaceState::Quit(Ok(())));
         }
 
         match self.screen_state {
-            ScreenState::Selection => {
-                if let Some(state) = self.selection_bar.handle_event(event, ()) {
-                    match state {
-                        SelectionState::Show(idx) => {
-                            self.selected = idx;
-                        }
-                        SelectionState::Adding => {
-                            if let Event::Key(key) = event {
-                                if key.code == KeyCode::Enter {
-                                    // asserts that if you've pressed enter then enter again that
-                                    // you've filled the buffer with at least a char
-                                    // otherwise it trips the assert
-                                    if self.selection_bar.buffer.is_empty() {
-                                        return Some(InterfaceState::Quit(Some("Error: Enter was pressed twice, the app assumes that you've pressed at least one key in order to fill up the buffer to make a todo list".to_string())));
-                                    }
-                                    //assert!(!self.selection_bar.buffer.is_empty());
-
-                                    let title = "[".to_string() + &self.selection_bar.buffer + "]";
-                                    self.collection.push(TodoList::new(title, ""));
-                                    self.selection_bar.set_names(self.collection_names());
-                                    self.selection_bar.buffer.clear();
-                                }
-                            }
-                        }
-                        SelectionState::Selected(idx) => {
-                            self.change_state(ScreenState::Main);
-                            self.selected = idx;
-                        }
-                        SelectionState::Remove(idx) => {
-                            if idx == 0 && self.collection.lists.is_empty() {
-                                return None;
-                            }
-                            self.collection.lists.remove(idx);
-                        }
-                    }
-                }
-            }
-
-            ScreenState::Main => {
-                let result = self
-                    .editor
-                    .handle_event(event, &mut self.collection.lists[self.selected])
-                    .unwrap_or_default();
-                match result {
-                    EditorState::Selected => self.change_state(ScreenState::Selection),
-                    EditorState::Add(data) => self.collection.lists[self.selected].push_str(&data),
-                    EditorState::Remove(idx) => {
-                        let list = &mut self.collection.lists[self.selected];
-                        if idx == 0 && list.is_empty() {
-                            self.change_state(ScreenState::Selection);
-                            return None;
-                        }
-                        list.data.remove(idx);
-                    }
-
-                    _ => {}
-                };
-            }
+            ScreenState::Selection => self.handle_selection_bar(event),
+            ScreenState::Main => self.handle_editor(event),
         };
 
         None
@@ -164,8 +179,8 @@ impl Interface {
             let [selection_area, editor_area] = layout.areas(frame.area());
 
             let list = self.collection.lists.get(self.selected);
-            self.editor.draw(frame, editor_area, list);
             self.selection_bar.draw(frame, selection_area);
+            self.editor.draw(frame, editor_area, list);
 
             match self.screen_state {
                 ScreenState::Selection => {
@@ -176,10 +191,13 @@ impl Interface {
                 }
 
                 ScreenState::Main => {
+                    let padding: u16 = 4; // padding is `[ ] `
                     let x = self.editor.cursor.x + 1;
                     let y = self.editor.cursor.y + 1;
-                    let position = Position::new(x + editor_area.x, y);
+                    let position = Position::new(editor_area.x + x + padding, y);
                     frame.set_cursor_position(position);
+                    tracing::info!("{position:?}");
+                    tracing::info!("x: {} area_x: {} padding: {}", x, editor_area.x, padding);
                 }
             };
         });

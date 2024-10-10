@@ -50,9 +50,9 @@ impl Editor {
         frame.render_widget(todos, editor_area);
 
         if self.popup_mode {
-            let popup = Block::bordered().style(Style::default()).green();
+            let popup = Block::bordered().style(Style::default()).green().title_top("Hello");
             tracing::info!("{:?}", self.buffer);
-            let text = Paragraph::new(&*self.buffer);
+            let text = Paragraph::new(&*self.buffer).block(popup);
 
             let area = frame.area().inner(Margin {
                 horizontal: 2,
@@ -60,7 +60,6 @@ impl Editor {
             });
 
             frame.render_widget(Clear, area);
-            frame.render_widget(popup, area);
             frame.render_widget(
                 text,
                 area.inner(Margin {
@@ -96,7 +95,7 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
             match key.code {
                 KeyCode::Esc => {
                     self.cursor = Cursor::new(0, 0);
-                    return Some(EditorState::Selected);
+                    return Some(EditorState::None);
                 }
 
                 KeyCode::Up => self.move_up(1),
@@ -111,9 +110,9 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
                 KeyCode::Char('h') => self.move_up(1),
 
                 KeyCode::Right => {
-                    let len_line = list.len_line(self.cursor.y as usize).saturating_sub(1);
-                    self.move_right(1, len_line as u16);
-                    tracing::info!(len_line);
+                    let max = list.len_line(self.cursor.y as usize).saturating_sub(1);
+                    self.move_right(1, max as u16);
+                    tracing::info!(max);
                 }
                 KeyCode::Char('l') => self.move_up(1),
                 KeyCode::Enter => {
@@ -153,24 +152,26 @@ impl CursorMovement for Editor {
 
     fn move_down(&mut self, amount: u16, max: u16) {
         let min = u16::min(max, self.viewport.y());
-        if self.cursor.y + amount < min - 1 {
+        if self.cursor.y + amount < min.saturating_sub(1) {
             self.cursor.y += amount;
         }
-        if self.cursor.y >= self.viewport.y() - 2 && self.cursor.y + self.scroll <= max - 1 {
+        if self.cursor.y >= self.viewport.y() - 2 && self.cursor.y + self.scroll <= max.saturating_sub(1) {
             self.scroll += 1;
         }
         tracing::info!("cursor {:?} scroll: {:?}", self.cursor, self.scroll);
     }
 
     fn move_left(&mut self, amount: u16) {
-        self.cursor.x = self.cursor.x.saturating_sub(amount).min(0);
+        self.cursor.x = self.cursor.x.saturating_sub(amount);
         tracing::debug!("editor move_left: {:?}", self.cursor);
     }
 
     fn move_right(&mut self, amount: u16, max: u16) {
         // padding for the todo status + the space at the end
         //let padding = 3_u16;
-        self.cursor.x = u16::min(self.cursor.x + amount, max);
+        if self.cursor.x + amount < max {
+            self.cursor.x += amount;
+        }
         tracing::debug!("editor move_right: {:?}", self.cursor);
     }
 }

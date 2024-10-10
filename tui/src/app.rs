@@ -64,7 +64,7 @@ impl App {
 
             if let Some(InterfaceState::Quit(str)) = self.interface.handle_event(&event, ()) {
                 self.deinit();
-                if let Some(str) = str {
+                if let Err(str) = str {
                     eprintln!("{}", str);
                     panic!();
                 }
