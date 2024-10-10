@@ -19,6 +19,12 @@ pub enum ScreenState {
     Main,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum PopupState {
+    EditorPopupState,
+    SelectionPopupState,
+}
+
 #[derive(Debug)]
 pub struct Interface {
     pub collection: TodoListCollection,
@@ -30,6 +36,7 @@ pub struct Interface {
 
     editor: Editor,
     screen_state: ScreenState,
+    popups: Vec<PopupState>,
 }
 
 impl Interface {
@@ -58,10 +65,10 @@ impl Interface {
                     }
                 }
                 SelectionState::Selected(idx) => {
-                    if !self.collection.lists[self.selected].is_empty() {
-                        self.change_state(ScreenState::Main);
-                        self.selected = idx;
-                    }
+                    //if !self.collection.lists[self.selected].is_empty() {
+                    self.change_state(ScreenState::Main);
+                    self.selected = idx;
+                    //}
                 }
                 SelectionState::Remove(idx) => {
                     if idx == 0 && self.collection.lists.is_empty() {
@@ -77,8 +84,7 @@ impl Interface {
     pub fn handle_editor(&mut self, event: &Event) -> Option<InterfaceState> {
         let result = self
             .editor
-            .handle_event(event, &mut self.collection.lists[self.selected])
-            .unwrap_or_default();
+            .handle_event(event, &mut self.collection.lists[self.selected])?;
         match result {
             EditorState::Selected => {
                 if !self.collection.lists[self.selected].is_empty() {
@@ -105,24 +111,7 @@ impl Interface {
 
 impl Default for Interface {
     fn default() -> Self {
-        let terminal = init();
-        let screen_size = ratatui::Terminal::size(&terminal).unwrap_or_default();
-        let viewport = Viewport::new(screen_size.height, screen_size.width);
-        let mut editor = Editor::default();
-        let mut selection_bar = SelectionBar::default();
-
-        editor.viewport = viewport;
-        selection_bar.viewport = viewport;
-
-        Self {
-            terminal,
-            editor,
-            selection_bar,
-            selected: 0,
-            screen_size: viewport,
-            collection: TodoListCollection::default(),
-            screen_state: ScreenState::default(),
-        }
+        Self::new(TodoListCollection::default())
     }
 }
 
@@ -141,6 +130,23 @@ impl EventHandler<(), InterfaceState> for Interface {
             ScreenState::Selection => self.handle_selection_bar(event),
             ScreenState::Main => self.handle_editor(event),
         };
+
+        match (self.editor.popup_mode, self.selection_bar.adding_mode) {
+            (true, false) => {
+                self.popups.push(PopupState::EditorPopupState);
+                self.popups.push(PopupState::EditorPopupState);
+                self.popups.push(PopupState::EditorPopupState);
+                self.popups.push(PopupState::EditorPopupState);
+            }
+            (false, true) => {
+                self.popups.push(PopupState::SelectionPopupState);
+                self.popups.push(PopupState::SelectionPopupState);
+                self.popups.push(PopupState::SelectionPopupState);
+                self.popups.push(PopupState::SelectionPopupState);
+            }
+
+            _ => {}
+        }
 
         None
     }
@@ -162,6 +168,7 @@ impl Interface {
         selection_bar.set_names(names);
 
         Self {
+            popups: vec![],
             terminal,
             collection,
             editor,
@@ -200,6 +207,13 @@ impl Interface {
                     tracing::info!("x: {} area_x: {} padding: {}", x, editor_area.x, padding);
                 }
             };
+
+            if let Some(popup) = self.popups.pop() {
+                match popup {
+                    PopupState::EditorPopupState => self.editor.draw_popup(frame),
+                    PopupState::SelectionPopupState => self.selection_bar.draw_popup(frame),
+                }
+            }
         });
     }
 
@@ -222,7 +236,7 @@ impl Interface {
     }
 
     pub fn set_editor_viewport(&mut self) {
-        self.editor.cursor = cursor::Cursor::new(self.screen_size.x(), 0);
+        self.editor.cursor = cursor::Cursor::new(0, 0);
     }
 
     pub fn get_editor_viewport(&self) -> &Viewport {

@@ -12,10 +12,10 @@ use crate::viewport::Viewport;
 pub struct SelectionBar {
     pub buffer: String,
     pub viewport: Viewport,
+    pub adding_mode: bool,
 
     cursor: Cursor,
     scroll: u16,
-    adding_mode: bool,
     names: Vec<String>,
 }
 
@@ -49,7 +49,9 @@ impl SelectionBar {
             .red()
             .block(Block::bordered().style(Style::default().red()));
         frame.render_widget(list, selection_area);
+    }
 
+    pub fn draw_popup(&self, frame: &mut Frame) {
         if self.adding_mode {
             let popup = Block::bordered().style(Style::default()).blue();
             tracing::info!("{:?}", self.buffer);
@@ -89,11 +91,20 @@ impl EventHandler<(), SelectionState> for SelectionBar {
     fn handle_event(&mut self, event: &Event, _: ()) -> Option<SelectionState> {
         if let Event::Key(key) = event {
             if self.adding_mode {
-                if let KeyCode::Char(ch) = key.code {
-                    if self.adding_mode {
+                match key.code {
+                    KeyCode::Char(ch) => {
                         self.buffer.push(ch);
                     }
-                    return None;
+
+                    KeyCode::Backspace => {
+                        let _ = self.buffer.pop();
+                    }
+
+                    KeyCode::Esc => {
+                        self.adding_mode = false;
+                    }
+
+                    _ => {}
                 }
             }
 

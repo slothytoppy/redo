@@ -16,12 +16,11 @@ pub struct Editor {
     pub viewport: Viewport,
 
     scroll: u16,
-    popup_mode: bool,
+    pub popup_mode: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone)]
 pub enum EditorState {
-    #[default]
     None,
     Selected,
     Add(String),
@@ -48,7 +47,9 @@ impl Editor {
             .blue()
             .block(Block::bordered().style(Style::default().white()));
         frame.render_widget(todos, editor_area);
+    }
 
+    pub fn draw_popup(&self, frame: &mut Frame) {
         if self.popup_mode {
             let popup = Block::bordered().style(Style::default()).green().title_top("Hello");
             tracing::info!("{:?}", self.buffer);
@@ -81,6 +82,7 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
             if let Event::Key(key) = event {
                 if let KeyCode::Esc = key.code {
                     self.popup_mode = !self.popup_mode;
+                    return None;
                 }
                 if let KeyCode::Char(ch) = key.code {
                     self.push_char(ch)
