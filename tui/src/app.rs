@@ -34,26 +34,9 @@ impl App {
         Self { file, interface }
     }
 
-    pub fn deinit(&self) {
-        self.interface.deinit();
-
-        let mut tmp = String::default();
-
-        for list in &self.interface.collection.lists {
-            tmp.push_str(&format!("{}:\n", list.title));
-            for todos in &list.data {
-                tmp.push_str(&format!("{} {}\n", todos.status, todos.data));
-            }
-        }
-
-        if !filesystem::write(&self.file, tmp) {
-            tracing::info!("failed to write to file {}", &self.file);
-        }
-    }
-
     pub fn run(&mut self) {
         let names = self.interface.collection_names();
-        self.interface.change_collection_names(names);
+        self.interface.set_selection_names(names);
 
         self.interface.set_editor_viewport();
 
@@ -70,6 +53,23 @@ impl App {
                 }
                 break;
             }
+        }
+    }
+
+    pub fn deinit(&self) {
+        self.interface.deinit();
+
+        let mut tmp = String::default();
+
+        for list in &self.interface.collection.lists {
+            tmp.push_str(&format!("{}:\n", list.title));
+            for todos in &list.data {
+                tmp.push_str(&format!("{} {}\n", todos.status, todos.data));
+            }
+        }
+
+        if !filesystem::write(&self.file, tmp) {
+            tracing::info!("failed to write to file {}", &self.file);
         }
     }
 }

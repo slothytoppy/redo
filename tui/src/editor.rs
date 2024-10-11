@@ -9,22 +9,91 @@ use crate::cursor::{Cursor, CursorMovement};
 use crate::event::EventHandler;
 use crate::viewport::Viewport;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Editor {
     pub buffer: String,
     pub cursor: Cursor,
     pub viewport: Viewport,
+    pub popup_mode: bool,
 
     scroll: u16,
-    pub popup_mode: bool,
 }
 
+// #[allow(dead_code] because parts of the enum are detected as "unused" but theyre used in tui.rs
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum EditorState {
     None,
+    AddPopup,
+    DelPopup,
     Selected,
     Add(String),
     Remove(usize),
+}
+
+impl EventHandler<&mut TodoList, EditorState> for Editor {
+    fn handle_event(&mut self, event: &Event, list: &mut TodoList) -> Option<EditorState> {
+        if self.popup_mode {
+            if let Event::Key(key) = event {
+                match key.code {
+                    KeyCode::Esc => {
+                        self.popup_mode = false;
+                        self.buffer.clear();
+                        return Some(EditorState::DelPopup);
+                    }
+                    KeyCode::Char(ch) => self.push_char(ch),
+                    KeyCode::Backspace => _ = self.buffer.pop(),
+                    KeyCode::Enter => {
+                        self.popup_mode = false;
+                        let title = self.buffer.clone();
+                        self.buffer.clear();
+                        return Some(EditorState::Add(title));
+                    }
+
+                    _ => {}
+                };
+            }
+        }
+
+        if let Event::Key(key) = event {
+            match key.code {
+                KeyCode::Esc => {
+                    self.cursor = Cursor::new(0, 0);
+                    return Some(EditorState::None);
+                }
+
+                KeyCode::Up | KeyCode::Char('k') => self.move_up(1),
+                KeyCode::Down | KeyCode::Char('j') => {
+                    self.move_down(1, list.len() as u16);
+                }
+                KeyCode::Left | KeyCode::Char('h') => self.move_left(1),
+                KeyCode::Right | KeyCode::Char('l') => {
+                    let max = list.len_line(self.cursor.y as usize);
+                    self.move_right(1, max as u16);
+                    tracing::info!(max);
+                }
+
+                KeyCode::Enter => {
+                    self.popup_mode = true;
+                    return Some(EditorState::AddPopup);
+                }
+                KeyCode::Char('x') => {
+                    let state = Some(EditorState::Remove(self.cursor.y as usize));
+                    self.cursor.y = self.cursor.y.saturating_sub(1);
+                    return state;
+                }
+
+                KeyCode::Char(' ') => {
+                    if let Some(todo) = list.data.get_mut(self.cursor.y as usize) {
+                        todo.status.toggle()
+                    }
+                }
+
+                _ => {}
+            }
+        }
+        None
+    }
 }
 
 impl Editor {
@@ -51,8 +120,12 @@ impl Editor {
 
     pub fn draw_popup(&self, frame: &mut Frame) {
         if self.popup_mode {
-            let popup = Block::bordered().style(Style::default()).green().title_top("Hello");
             tracing::info!("{:?}", self.buffer);
+
+            let popup = Block::bordered()
+                .style(Style::default())
+                .green()
+                .title_top("Adding Todo");
             let text = Paragraph::new(&*self.buffer).block(popup);
 
             let area = frame.area().inner(Margin {
@@ -76,73 +149,6 @@ impl Editor {
     }
 }
 
-impl EventHandler<&mut TodoList, EditorState> for Editor {
-    fn handle_event(&mut self, event: &Event, list: &mut TodoList) -> Option<EditorState> {
-        if self.popup_mode {
-            if let Event::Key(key) = event {
-                if let KeyCode::Esc = key.code {
-                    self.popup_mode = !self.popup_mode;
-                    return None;
-                }
-                if let KeyCode::Char(ch) = key.code {
-                    self.push_char(ch)
-                }
-                if let KeyCode::Backspace = key.code {
-                    self.buffer.pop();
-                }
-            }
-        }
-
-        if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Esc => {
-                    self.cursor = Cursor::new(0, 0);
-                    return Some(EditorState::None);
-                }
-
-                KeyCode::Up => self.move_up(1),
-                KeyCode::Char('k') => self.move_up(1),
-
-                KeyCode::Down => {
-                    self.move_down(1, list.len() as u16);
-                }
-                KeyCode::Char('j') => self.move_up(1),
-
-                KeyCode::Left => self.move_left(1),
-                KeyCode::Char('h') => self.move_up(1),
-
-                KeyCode::Right => {
-                    let max = list.len_line(self.cursor.y as usize).saturating_sub(1);
-                    self.move_right(1, max as u16);
-                    tracing::info!(max);
-                }
-                KeyCode::Char('l') => self.move_up(1),
-                KeyCode::Enter => {
-                    if self.popup_mode {
-                        self.popup_mode = !self.popup_mode;
-                        return Some(EditorState::Add(self.buffer.clone()));
-                    }
-                    self.popup_mode = !self.popup_mode
-                }
-                KeyCode::Char('x') => {
-                    let state = Some(EditorState::Remove(self.cursor.y as usize));
-                    self.cursor.y = self.cursor.y.saturating_sub(1);
-                    return state;
-                }
-
-                KeyCode::Char(' ') => {
-                    if let Some(todo) = list.data.get_mut(self.cursor.y as usize) {
-                        todo.status.toggle()
-                    }
-                }
-
-                _ => {}
-            }
-        }
-        None
-    }
-}
-
 impl CursorMovement for Editor {
     fn move_up(&mut self, amount: u16) {
         if self.cursor.y == 0 {
@@ -154,7 +160,7 @@ impl CursorMovement for Editor {
 
     fn move_down(&mut self, amount: u16, max: u16) {
         let min = u16::min(max, self.viewport.y());
-        if self.cursor.y + amount < min.saturating_sub(1) {
+        if self.cursor.y + amount < min {
             self.cursor.y += amount;
         }
         if self.cursor.y >= self.viewport.y() - 2 && self.cursor.y + self.scroll <= max.saturating_sub(1) {

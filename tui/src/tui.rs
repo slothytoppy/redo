@@ -1,10 +1,13 @@
 use std::io::{stdout, Write};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use ratatui::layout::{Constraint, Layout, Position};
-use ratatui::{init, restore, DefaultTerminal};
+use ratatui::layout::{Constraint, Layout, Position, Rect};
+use ratatui::style::{Style, Stylize};
+use ratatui::widgets::{Block, Paragraph};
+use ratatui::{init, restore, DefaultTerminal, Frame};
 use redo::todo::TodoListCollection;
 use redo::TodoList;
+use tracing::Instrument;
 
 use crate::cursor::{self};
 use crate::editor::{Editor, EditorState};
@@ -16,26 +19,44 @@ use crate::viewport::Viewport;
 pub enum ScreenState {
     #[default]
     Selection,
-    Main,
+    Editor,
+    Help,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum PopupState {
-    EditorPopupState,
-    SelectionPopupState,
+    Editor,
+    Selection,
+}
+
+#[derive(Debug, Default)]
+pub struct HelpScreen {}
+
+impl HelpScreen {
+    pub fn draw(&self, help_area: Rect, frame: &mut Frame) {
+        let help_vec =
+            "Selection Mode->\nUp/k  -> Move up\nDown/j  -> Move down\nRight/l  -> Move right\nLeft/h  -> Move Left"
+                .to_string();
+        let help = Paragraph::new(help_vec)
+            .style(Style::default())
+            .blue()
+            .block(Block::bordered().style(Style::default().white()));
+        frame.render_widget(help, help_area);
+    }
 }
 
 #[derive(Debug)]
 pub struct Interface {
     pub collection: TodoListCollection,
 
-    selected: usize,
+    selected_list: usize,
     screen_size: Viewport,
     selection_bar: SelectionBar,
     terminal: DefaultTerminal,
 
     editor: Editor,
     screen_state: ScreenState,
+
     popups: Vec<PopupState>,
 }
 
@@ -44,37 +65,28 @@ impl Interface {
         if let Some(state) = self.selection_bar.handle_event(event, ()) {
             match state {
                 SelectionState::Show(idx) => {
-                    self.selected = idx;
+                    self.selected_list = idx;
                 }
-                SelectionState::Adding => {
-                    if let Event::Key(key) = event {
-                        if key.code == KeyCode::Enter {
-                            // asserts that if you've pressed enter then enter again that
-                            // you've filled the buffer with at least a char
-                            // otherwise it trips the assert
-                            if self.selection_bar.buffer.is_empty() {
-                                let message="Error: Enter was pressed twice, the app assumes that you've pressed at least one key in order to fill up the buffer to make a todo list".to_string();
-                                return Some(InterfaceState::Quit(Err(message)));
-                            }
+                SelectionState::AddPopup => {
+                    self.popups.push(PopupState::Selection);
+                }
+                SelectionState::AddTodo(title) => {
+                    self.collection.push(TodoList::new(title, ""));
+                    self.selection_bar.set_names(self.collection_names());
+                    self.popups.pop();
+                }
 
-                            let title = "[".to_string() + &self.selection_bar.buffer + "]";
-                            self.collection.push(TodoList::new(title, ""));
-                            self.selection_bar.set_names(self.collection_names());
-                            self.selection_bar.buffer.clear();
-                        }
-                    }
-                }
+                SelectionState::DelPopup => _ = self.popups.pop(),
                 SelectionState::Selected(idx) => {
-                    //if !self.collection.lists[self.selected].is_empty() {
-                    self.change_state(ScreenState::Main);
-                    self.selected = idx;
-                    //}
+                    self.change_state(ScreenState::Editor);
+                    self.selected_list = idx;
                 }
                 SelectionState::Remove(idx) => {
                     if idx == 0 && self.collection.lists.is_empty() {
                         return None;
                     }
                     self.collection.lists.remove(idx);
+                    self.selected_list = self.selected_list.saturating_sub(1);
                 }
             };
         };
@@ -84,26 +96,33 @@ impl Interface {
     pub fn handle_editor(&mut self, event: &Event) -> Option<InterfaceState> {
         let result = self
             .editor
-            .handle_event(event, &mut self.collection.lists[self.selected])?;
+            .handle_event(event, &mut self.collection.lists[self.selected_list])?;
         match result {
             EditorState::Selected => {
-                if !self.collection.lists[self.selected].is_empty() {
+                if !self.collection.lists[self.selected_list].is_empty() {
                     self.change_state(ScreenState::Selection);
                 }
-                tracing::info!("Selected: {:?}", self.collection.lists[self.selected]);
+                tracing::info!("Selected: {:?}", self.collection.lists[self.selected_list]);
             }
-            EditorState::Add(data) => self.collection.lists[self.selected].push_str(&data),
+            EditorState::AddPopup => self.popups.push(PopupState::Editor),
+            EditorState::Add(data) => {
+                if !self.collection.lists[self.selected_list].is_empty() {
+                    self.editor.cursor.y += 1;
+                }
+                self.collection.lists[self.selected_list].push_str(&data);
+            }
             EditorState::Remove(idx) => {
-                let list = &mut self.collection.lists[self.selected];
-                if idx == 0 && list.is_empty() {
+                let list = &mut self.collection.lists[self.selected_list];
+                assert!(list.data.len() > idx);
+
+                list.data.remove(idx);
+                if list.is_empty() {
                     self.change_state(ScreenState::Selection);
                     return None;
                 }
-                list.data.remove(idx);
             }
-            EditorState::None => {
-                self.change_state(ScreenState::Selection);
-            }
+            EditorState::None => self.change_state(ScreenState::Selection),
+            EditorState::DelPopup => _ = self.popups.pop(),
         };
         None
     }
@@ -128,25 +147,9 @@ impl EventHandler<(), InterfaceState> for Interface {
 
         match self.screen_state {
             ScreenState::Selection => self.handle_selection_bar(event),
-            ScreenState::Main => self.handle_editor(event),
+            ScreenState::Editor => self.handle_editor(event),
+            ScreenState::Help => None,
         };
-
-        match (self.editor.popup_mode, self.selection_bar.adding_mode) {
-            (true, false) => {
-                self.popups.push(PopupState::EditorPopupState);
-                self.popups.push(PopupState::EditorPopupState);
-                self.popups.push(PopupState::EditorPopupState);
-                self.popups.push(PopupState::EditorPopupState);
-            }
-            (false, true) => {
-                self.popups.push(PopupState::SelectionPopupState);
-                self.popups.push(PopupState::SelectionPopupState);
-                self.popups.push(PopupState::SelectionPopupState);
-                self.popups.push(PopupState::SelectionPopupState);
-            }
-
-            _ => {}
-        }
 
         None
     }
@@ -174,7 +177,7 @@ impl Interface {
             editor,
             selection_bar,
 
-            selected: 0,
+            selected_list: 0,
             screen_size: viewport,
             screen_state: ScreenState::default(),
         }
@@ -185,7 +188,7 @@ impl Interface {
             let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
             let [selection_area, editor_area] = layout.areas(frame.area());
 
-            let list = self.collection.lists.get(self.selected);
+            let list = self.collection.lists.get(self.selected_list);
             self.selection_bar.draw(frame, selection_area);
             self.editor.draw(frame, editor_area, list);
 
@@ -197,7 +200,7 @@ impl Interface {
                     frame.set_cursor_position(position);
                 }
 
-                ScreenState::Main => {
+                ScreenState::Editor => {
                     let padding: u16 = 4; // padding is `[ ] `
                     let x = self.editor.cursor.x + 1;
                     let y = self.editor.cursor.y + 1;
@@ -206,26 +209,29 @@ impl Interface {
                     tracing::info!("{position:?}");
                     tracing::info!("x: {} area_x: {} padding: {}", x, editor_area.x, padding);
                 }
+                ScreenState::Help => {
+                    HelpScreen::draw(&HelpScreen::default(), frame.area(), frame);
+                }
             };
 
-            if let Some(popup) = self.popups.pop() {
+            if let Some(popup) = self.popups.last() {
                 match popup {
-                    PopupState::EditorPopupState => self.editor.draw_popup(frame),
-                    PopupState::SelectionPopupState => self.selection_bar.draw_popup(frame),
+                    PopupState::Editor => self.editor.draw_popup(frame),
+                    PopupState::Selection => self.selection_bar.draw_popup(frame),
                 }
             }
         });
     }
 
     pub fn add_todo(&mut self, content: &str) {
-        let list = self.collection.get_mut_todo_list(self.selected);
+        let list = self.collection.get_mut_todo_list(self.selected_list);
         if let Some(list) = list {
             list.push_str(content)
         }
     }
 
     pub fn remove_todo(&mut self) {
-        let list = self.collection.get_mut_todo_list(self.selected);
+        let list = self.collection.get_mut_todo_list(self.selected_list);
         if let Some(list) = list {
             list.data.remove(self.editor.cursor.x as usize);
         }
@@ -256,7 +262,7 @@ impl Interface {
         self.screen_state = state;
     }
 
-    pub fn change_collection_names(&mut self, names: Vec<String>) {
+    pub fn set_selection_names(&mut self, names: Vec<String>) {
         self.selection_bar.set_names(names);
     }
 

@@ -12,8 +12,8 @@ use crate::viewport::Viewport;
 pub struct SelectionBar {
     pub buffer: String,
     pub viewport: Viewport,
-    pub adding_mode: bool,
 
+    popup_mode: bool,
     cursor: Cursor,
     scroll: u16,
     names: Vec<String>,
@@ -22,75 +22,17 @@ pub struct SelectionBar {
 #[derive(Debug)]
 pub enum SelectionState {
     Selected(usize),
-    Adding,
+    AddPopup,
+    DelPopup,
     Remove(usize),
+    AddTodo(String),
     Show(usize),
-}
-
-impl SelectionBar {
-    pub fn set_names(&mut self, names: Vec<String>) {
-        self.names = names
-    }
-
-    pub fn draw(&mut self, frame: &mut Frame, selection_area: Rect) {
-        let mut names_vec = vec![];
-        for item in self
-            .names
-            .iter()
-            .skip(self.scroll as usize)
-            .take(self.viewport.y() as usize)
-        {
-            names_vec.push(item.clone());
-        }
-
-        let list = List::new(names_vec)
-            .direction(ListDirection::TopToBottom)
-            .style(Style::default())
-            .red()
-            .block(Block::bordered().style(Style::default().red()));
-        frame.render_widget(list, selection_area);
-    }
-
-    pub fn draw_popup(&self, frame: &mut Frame) {
-        if self.adding_mode {
-            let popup = Block::bordered().style(Style::default()).blue();
-            tracing::info!("{:?}", self.buffer);
-            let text = Paragraph::new(&*self.buffer);
-
-            let area = frame.area().inner(Margin {
-                horizontal: 2,
-                vertical: 15,
-            });
-
-            frame.render_widget(Clear, area);
-            frame.render_widget(popup, area);
-            frame.render_widget(
-                text,
-                area.inner(Margin {
-                    horizontal: 1,
-                    vertical: 1,
-                }),
-            );
-        }
-    }
-
-    pub fn remove_name(&mut self, idx: usize) {
-        if self.names.is_empty() || idx > self.names.len() {
-            return;
-        }
-        self.names.remove(idx);
-        self.cursor.y = self.cursor.y.saturating_sub(1)
-    }
-
-    pub fn cursor_pos(&self) -> (u16, u16) {
-        (self.cursor.y, self.cursor.x)
-    }
 }
 
 impl EventHandler<(), SelectionState> for SelectionBar {
     fn handle_event(&mut self, event: &Event, _: ()) -> Option<SelectionState> {
         if let Event::Key(key) = event {
-            if self.adding_mode {
+            if self.popup_mode {
                 match key.code {
                     KeyCode::Char(ch) => {
                         self.buffer.push(ch);
@@ -100,8 +42,19 @@ impl EventHandler<(), SelectionState> for SelectionBar {
                         let _ = self.buffer.pop();
                     }
 
+                    KeyCode::Enter => {
+                        if self.buffer.is_empty() {
+                            return None;
+                        }
+                        let title = "[".to_string() + &self.buffer + "]";
+                        self.popup_mode = false;
+                        self.buffer.clear();
+                        return Some(SelectionState::AddTodo(title));
+                    }
+
                     KeyCode::Esc => {
-                        self.adding_mode = false;
+                        self.popup_mode = false;
+                        return Some(SelectionState::DelPopup);
                     }
 
                     _ => {}
@@ -131,16 +84,13 @@ impl EventHandler<(), SelectionState> for SelectionBar {
                     return state;
                 }
                 KeyCode::Enter => {
-                    if self.adding_mode {
-                        self.adding_mode = false;
-                        return Some(SelectionState::Adding);
-                    }
-                    self.adding_mode = true;
+                    self.popup_mode = true;
+                    return Some(SelectionState::AddPopup);
                 }
 
                 KeyCode::Esc => {
-                    if self.adding_mode {
-                        self.adding_mode = false
+                    if self.popup_mode {
+                        self.popup_mode = false
                     }
                 }
 
@@ -148,6 +98,67 @@ impl EventHandler<(), SelectionState> for SelectionBar {
             }
         }
         None
+    }
+}
+
+impl SelectionBar {
+    pub fn set_names(&mut self, names: Vec<String>) {
+        self.names = names
+    }
+
+    pub fn draw(&mut self, frame: &mut Frame, selection_area: Rect) {
+        let mut names_vec = vec![];
+        for item in self
+            .names
+            .iter()
+            .skip(self.scroll as usize)
+            .take(self.viewport.y() as usize)
+        {
+            names_vec.push(item.clone());
+        }
+
+        let list = List::new(names_vec)
+            .direction(ListDirection::TopToBottom)
+            .style(Style::default())
+            .red()
+            .block(Block::bordered().style(Style::default().red()));
+        frame.render_widget(list, selection_area);
+    }
+
+    pub fn draw_popup(&self, frame: &mut Frame) {
+        tracing::info!("{:?}", self.buffer);
+
+        let popup = Block::bordered()
+            .style(Style::default())
+            .title_top("Adding TodoList")
+            .blue();
+        let text = Paragraph::new(&*self.buffer).block(popup);
+
+        let area = frame.area().inner(Margin {
+            horizontal: 2,
+            vertical: 15,
+        });
+
+        frame.render_widget(Clear, area);
+        frame.render_widget(
+            text,
+            area.inner(Margin {
+                horizontal: 1,
+                vertical: 1,
+            }),
+        );
+    }
+
+    pub fn remove_name(&mut self, idx: usize) {
+        if self.names.is_empty() || idx > self.names.len() {
+            return;
+        }
+        self.names.remove(idx);
+        self.cursor.y = self.cursor.y.saturating_sub(1)
+    }
+
+    pub fn cursor_pos(&self) -> (u16, u16) {
+        (self.cursor.y, self.cursor.x)
     }
 }
 
