@@ -9,7 +9,6 @@ use ratatui::{init, restore, DefaultTerminal, Frame};
 use redo::todo::TodoListCollection;
 use redo::TodoList;
 
-use crate::cursor::{self};
 use crate::editor::{Editor, EditorState};
 use crate::event::EventHandler;
 use crate::selection::{SelectionBar, SelectionState};
@@ -85,7 +84,7 @@ pub struct Interface {
 
 impl Interface {
     pub fn handle_selection_bar(&mut self, event: &Event) {
-        if let Some(state) = self.selection_bar.handle_event(event, ()) {
+        if let Some(state) = self.selection_bar.handle_event(event, self.collection_names()) {
             match state {
                 SelectionState::DelPopup => _ = self.popups.pop(),
                 SelectionState::Show(idx) => {
@@ -100,7 +99,7 @@ impl Interface {
                 }
                 SelectionState::AddTodo(title) => {
                     self.collection.push(TodoList::new(title, ""));
-                    self.selection_bar.set_names(self.collection_names());
+                    //self.selection_bar.set_names(self.collection_names());
                     self.popups.pop();
                 }
                 SelectionState::Remove(idx) => {
@@ -219,7 +218,7 @@ impl Interface {
         let mut names = vec![];
         // this clone isnt good, maybe passing Vec<&String> is better or doing something else
         collection.lists.iter().for_each(|list| names.push(list.title.clone()));
-        selection_bar.set_names(names);
+        //selection_bar.set_names(names);
 
         Self {
             popups: vec![],
@@ -236,6 +235,7 @@ impl Interface {
     }
 
     pub fn draw(&mut self) {
+        let names = self.collection_names();
         _ = self.terminal.draw(|frame| {
             let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
             let [selection_area, editor_area] = layout.areas(frame.area());
@@ -262,7 +262,7 @@ impl Interface {
             };
 
             let list = self.collection.lists.get(self.selected_list);
-            self.selection_bar.draw(frame, selection_area);
+            self.selection_bar.draw(frame, selection_area, names);
             self.editor.draw(frame, editor_area, list);
 
             if let Some(popup) = self.popups.last() {
@@ -292,10 +292,6 @@ impl Interface {
         restore();
     }
 
-    pub fn set_editor_viewport(&mut self) {
-        self.editor.cursor = cursor::Cursor::new(0, 0);
-    }
-
     pub fn get_editor_viewport(&self) -> &Viewport {
         &self.screen_size
     }
@@ -313,9 +309,9 @@ impl Interface {
         self.screen_state = state;
     }
 
-    pub fn set_selection_names(&mut self, names: Vec<String>) {
-        self.selection_bar.set_names(names);
-    }
+    //pub fn set_selection_names(&mut self, names: Vec<String>) {
+    //    self.selection_bar.set_names(names);
+    //}
 
     pub fn flush(&mut self) {
         let _ = stdout().flush();

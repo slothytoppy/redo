@@ -35,11 +35,6 @@ impl App {
     }
 
     pub fn run(&mut self) {
-        let names = self.interface.collection_names();
-        self.interface.set_selection_names(names);
-
-        self.interface.set_editor_viewport();
-
         loop {
             self.interface.draw();
             self.interface.flush();

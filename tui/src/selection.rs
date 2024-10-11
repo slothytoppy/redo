@@ -17,7 +17,6 @@ pub struct SelectionBar {
     popup_mode: bool,
     cursor: Cursor,
     scroll: u16,
-    names: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -30,8 +29,8 @@ pub enum SelectionState {
     Show(usize),
 }
 
-impl EventHandler<(), SelectionState> for SelectionBar {
-    fn handle_event(&mut self, event: &Event, _: ()) -> Option<SelectionState> {
+impl EventHandler<Vec<String>, SelectionState> for SelectionBar {
+    fn handle_event(&mut self, event: &Event, names: Vec<String>) -> Option<SelectionState> {
         if let Event::Key(key) = event {
             if self.popup_mode {
                 match key.code {
@@ -68,19 +67,19 @@ impl EventHandler<(), SelectionState> for SelectionBar {
                     return Some(SelectionState::Show(self.cursor.y as usize));
                 }
                 KeyCode::Down | KeyCode::Char('j') => {
-                    self.move_down(1, self.names.len().saturating_sub(1) as u16);
+                    self.move_down(1, names.len().saturating_sub(1) as u16);
                     return Some(SelectionState::Show(self.cursor.y as usize));
                 }
 
                 KeyCode::Char(' ') => {
-                    if !self.names.is_empty() {
+                    if !names.is_empty() {
                         return Some(SelectionState::Selected(self.cursor.y as usize));
                     }
                 }
                 KeyCode::Char('x') => {
                     let state = Some(SelectionState::Remove(self.cursor.y as usize));
-                    self.remove_name(self.cursor.y as usize);
-                    if self.cursor.y as usize > self.names.len().saturating_sub(1) {
+                    //self.remove_name(self.cursor.y as usize);
+                    if self.cursor.y as usize > names.len().saturating_sub(1) {
                         self.cursor.y = self.cursor.y.saturating_sub(1);
                     }
                     return state;
@@ -104,18 +103,9 @@ impl EventHandler<(), SelectionState> for SelectionBar {
 }
 
 impl SelectionBar {
-    pub fn set_names(&mut self, names: Vec<String>) {
-        self.names = names
-    }
-
-    pub fn draw(&mut self, frame: &mut Frame, selection_area: Rect) {
+    pub fn draw(&mut self, frame: &mut Frame, selection_area: Rect, names: Vec<String>) {
         let mut names_vec = vec![];
-        for item in self
-            .names
-            .iter()
-            .skip(self.scroll as usize)
-            .take(self.viewport.y() as usize)
-        {
+        for item in names.iter().skip(self.scroll as usize).take(self.viewport.y() as usize) {
             names_vec.push(item.clone());
         }
 
@@ -149,13 +139,13 @@ impl SelectionBar {
         );
     }
 
-    pub fn remove_name(&mut self, idx: usize) {
-        if self.names.is_empty() || idx > self.names.len() {
-            return;
-        }
-        self.names.remove(idx);
-        self.cursor.y = self.cursor.y.saturating_sub(1)
-    }
+    //pub fn remove_name(&mut self, idx: usize) {
+    //    if self.names.is_empty() || idx > self.names.len() {
+    //        return;
+    //    }
+    //    self.names.remove(idx);
+    //    self.cursor.y = self.cursor.y.saturating_sub(1)
+    //}
 
     pub fn cursor_pos(&self) -> (u16, u16) {
         (self.cursor.y, self.cursor.x)
