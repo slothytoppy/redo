@@ -206,8 +206,6 @@ impl Interface {
                     let y = self.editor.cursor.y + 1;
                     let position = Position::new(editor_area.x + x + padding, y);
                     frame.set_cursor_position(position);
-                    tracing::info!("{position:?}");
-                    tracing::info!("x: {} area_x: {} padding: {}", x, editor_area.x, padding);
                 }
                 ScreenState::Help => {
                     HelpScreen::draw(&HelpScreen::default(), frame.area(), frame);

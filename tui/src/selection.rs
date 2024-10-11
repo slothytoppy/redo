@@ -62,14 +62,15 @@ impl EventHandler<(), SelectionState> for SelectionBar {
             }
 
             match key.code {
-                KeyCode::Up => {
+                KeyCode::Up | KeyCode::Char('k') => {
                     self.move_up(1);
                     return Some(SelectionState::Show(self.cursor.y as usize));
                 }
-                KeyCode::Down => {
+                KeyCode::Down | KeyCode::Char('j') => {
                     self.move_down(1, self.names.len().saturating_sub(1) as u16);
                     return Some(SelectionState::Show(self.cursor.y as usize));
                 }
+
                 KeyCode::Char(' ') => {
                     if !self.names.is_empty() {
                         return Some(SelectionState::Selected(self.cursor.y as usize));
@@ -126,8 +127,6 @@ impl SelectionBar {
     }
 
     pub fn draw_popup(&self, frame: &mut Frame) {
-        tracing::info!("{:?}", self.buffer);
-
         let popup = Block::bordered()
             .style(Style::default())
             .title_top("Adding TodoList")

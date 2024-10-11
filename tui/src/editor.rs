@@ -120,8 +120,6 @@ impl Editor {
 
     pub fn draw_popup(&self, frame: &mut Frame) {
         if self.popup_mode {
-            tracing::info!("{:?}", self.buffer);
-
             let popup = Block::bordered()
                 .style(Style::default())
                 .green()
