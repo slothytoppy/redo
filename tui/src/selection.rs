@@ -1,6 +1,7 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::{Margin, Rect};
 use ratatui::style::{Style, Stylize};
+use ratatui::text::Line;
 use ratatui::widgets::{Block, Clear, List, ListDirection, Paragraph};
 use ratatui::Frame;
 
@@ -118,11 +119,11 @@ impl SelectionBar {
             names_vec.push(item.clone());
         }
 
+        let title = Line::from("Selection").style(Style::default().yellow());
         let list = List::new(names_vec)
             .direction(ListDirection::TopToBottom)
-            .style(Style::default())
-            .red()
-            .block(Block::bordered().style(Style::default().red()));
+            .block(Block::bordered().red().title_top(title))
+            .white();
         frame.render_widget(list, selection_area);
     }
 

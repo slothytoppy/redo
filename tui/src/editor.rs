@@ -1,6 +1,7 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::layout::{Margin, Rect};
 use ratatui::style::{Style, Stylize};
+use ratatui::text::Line;
 use ratatui::widgets::{Block, Clear, List, ListDirection, Paragraph};
 use ratatui::Frame;
 use redo::TodoList;
@@ -109,11 +110,11 @@ impl Editor {
             }
         };
 
+        let title = Line::from("Selection").style(Style::default().yellow());
         let todos = List::new(todos_vec)
             .direction(ListDirection::TopToBottom)
-            .style(Style::default())
             .blue()
-            .block(Block::bordered().style(Style::default().white()));
+            .block(Block::bordered().white().title_top(title));
         frame.render_widget(todos, editor_area);
     }
 

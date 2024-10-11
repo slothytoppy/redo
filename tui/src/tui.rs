@@ -43,10 +43,13 @@ impl HelpScreen {
                 .bold()
                 .into(),
             "".into(),
-            "Up/k  -> Move up".into(),
-            "Down/j  -> Move down".into(),
-            "Right/l  -> Move right".into(),
-            "Left/h  -> Move Left".into(),
+            "Up/k            Move up   ".into(),
+            "Down/j          Move down  ".into(),
+            "Right/l         Move right ".into(),
+            "Left/h          Move Left ".into(),
+            "Space           Select List".into(),
+            "Enter           Create List".into(),
+            "Esc             Leave Popup".into(),
         ];
 
         let [layout] = Layout::vertical([Constraint::Length(help_vec.len() as u16 + 6)])
@@ -84,22 +87,21 @@ impl Interface {
     pub fn handle_selection_bar(&mut self, event: &Event) {
         if let Some(state) = self.selection_bar.handle_event(event, ()) {
             match state {
+                SelectionState::DelPopup => _ = self.popups.pop(),
                 SelectionState::Show(idx) => {
                     self.selected_list = idx;
                 }
                 SelectionState::AddPopup => {
                     self.popups.push(PopupState::Selection);
                 }
+                SelectionState::Selected(idx) => {
+                    self.change_state(ScreenState::Editor);
+                    self.selected_list = idx;
+                }
                 SelectionState::AddTodo(title) => {
                     self.collection.push(TodoList::new(title, ""));
                     self.selection_bar.set_names(self.collection_names());
                     self.popups.pop();
-                }
-
-                SelectionState::DelPopup => _ = self.popups.pop(),
-                SelectionState::Selected(idx) => {
-                    self.change_state(ScreenState::Editor);
-                    self.selected_list = idx;
                 }
                 SelectionState::Remove(idx) => {
                     if idx == 0 && self.collection.lists.is_empty() {
@@ -166,6 +168,7 @@ impl EventHandler<(), InterfaceState> for Interface {
         if self.should_quit(event) {
             return Some(InterfaceState::Quit(Ok(())));
         }
+
         if let Event::Key(key) = event {
             match key.code {
                 KeyCode::Esc => {
