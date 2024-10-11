@@ -79,7 +79,6 @@ impl EventHandler<&mut TodoList, EditorState> for Editor {
                 }
                 KeyCode::Char('x') => {
                     let state = Some(EditorState::Remove(self.cursor.y as usize));
-                    self.cursor.y = self.cursor.y.saturating_sub(1);
                     return state;
                 }
 
@@ -161,7 +160,8 @@ impl CursorMovement for Editor {
         if self.cursor.y + amount < min {
             self.cursor.y += amount;
         }
-        if self.cursor.y >= self.viewport.y() - 2 && self.cursor.y + self.scroll <= max.saturating_sub(1) {
+        if self.cursor.y >= self.viewport.y().saturating_sub(2) && self.cursor.y + self.scroll <= max.saturating_sub(1)
+        {
             self.scroll += 1;
         }
         tracing::info!("cursor {:?} scroll: {:?}", self.cursor, self.scroll);

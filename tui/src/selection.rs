@@ -79,7 +79,7 @@ impl EventHandler<(), SelectionState> for SelectionBar {
                 KeyCode::Char('x') => {
                     let state = Some(SelectionState::Remove(self.cursor.y as usize));
                     self.remove_name(self.cursor.y as usize);
-                    if self.cursor.y as usize > self.names.len() - 1 {
+                    if self.cursor.y as usize > self.names.len().saturating_sub(1) {
                         self.cursor.y = self.cursor.y.saturating_sub(1);
                     }
                     return state;

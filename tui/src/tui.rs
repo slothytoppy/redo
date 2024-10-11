@@ -1,13 +1,13 @@
 use std::io::{stdout, Write};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use ratatui::layout::{Constraint, Layout, Position, Rect};
-use ratatui::style::{Style, Stylize};
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::layout::{Constraint, Flex, Layout, Position, Rect};
+use ratatui::style::{Color, Style, Stylize};
+use ratatui::text::Line;
+use ratatui::widgets::{Block, Borders, Padding, Paragraph};
 use ratatui::{init, restore, DefaultTerminal, Frame};
 use redo::todo::TodoListCollection;
 use redo::TodoList;
-use tracing::Instrument;
 
 use crate::cursor::{self};
 use crate::editor::{Editor, EditorState};
@@ -30,18 +30,37 @@ pub enum PopupState {
 }
 
 #[derive(Debug, Default)]
-pub struct HelpScreen {}
+pub struct HelpScreen {
+    active: bool,
+}
 
 impl HelpScreen {
     pub fn draw(&self, help_area: Rect, frame: &mut Frame) {
-        let help_vec =
-            "Selection Mode->\nUp/k  -> Move up\nDown/j  -> Move down\nRight/l  -> Move right\nLeft/h  -> Move Left"
-                .to_string();
+        let help_vec: Vec<Line> = vec![
+            " Selection Mode "
+                .fg(Color::Rgb(255, 255, 255))
+                .bg(Color::Rgb(183, 72, 101))
+                .bold()
+                .into(),
+            "".into(),
+            "Up/k  -> Move up".into(),
+            "Down/j  -> Move down".into(),
+            "Right/l  -> Move right".into(),
+            "Left/h  -> Move Left".into(),
+        ];
+
+        let [layout] = Layout::vertical([Constraint::Length(help_vec.len() as u16 + 6)])
+            .flex(Flex::Center)
+            .areas(help_area);
+        let [layout] = Layout::horizontal([Constraint::Length(50)])
+            .flex(Flex::Center)
+            .areas(layout);
         let help = Paragraph::new(help_vec)
+            .block(Block::default().borders(Borders::ALL).padding(Padding::new(5, 5, 2, 2)))
             .style(Style::default())
             .blue()
-            .block(Block::bordered().style(Style::default().white()));
-        frame.render_widget(help, help_area);
+            .centered();
+        frame.render_widget(help, layout);
     }
 }
 
@@ -58,10 +77,11 @@ pub struct Interface {
     screen_state: ScreenState,
 
     popups: Vec<PopupState>,
+    help_screen: HelpScreen,
 }
 
 impl Interface {
-    pub fn handle_selection_bar(&mut self, event: &Event) -> Option<InterfaceState> {
+    pub fn handle_selection_bar(&mut self, event: &Event) {
         if let Some(state) = self.selection_bar.handle_event(event, ()) {
             match state {
                 SelectionState::Show(idx) => {
@@ -83,20 +103,22 @@ impl Interface {
                 }
                 SelectionState::Remove(idx) => {
                     if idx == 0 && self.collection.lists.is_empty() {
-                        return None;
+                        return;
                     }
                     self.collection.lists.remove(idx);
                     self.selected_list = self.selected_list.saturating_sub(1);
                 }
             };
         };
-        None
     }
 
-    pub fn handle_editor(&mut self, event: &Event) -> Option<InterfaceState> {
-        let result = self
+    pub fn handle_editor(&mut self, event: &Event) {
+        let Some(result) = self
             .editor
-            .handle_event(event, &mut self.collection.lists[self.selected_list])?;
+            .handle_event(event, &mut self.collection.lists[self.selected_list])
+        else {
+            return;
+        };
         match result {
             EditorState::Selected => {
                 if !self.collection.lists[self.selected_list].is_empty() {
@@ -114,17 +136,17 @@ impl Interface {
             EditorState::Remove(idx) => {
                 let list = &mut self.collection.lists[self.selected_list];
                 assert!(list.data.len() > idx);
-
                 list.data.remove(idx);
+                if list.data.len().saturating_sub(1) < self.editor.cursor.y as usize {
+                    self.editor.cursor.y = self.editor.cursor.y.saturating_sub(1);
+                }
                 if list.is_empty() {
                     self.change_state(ScreenState::Selection);
-                    return None;
                 }
             }
             EditorState::None => self.change_state(ScreenState::Selection),
             EditorState::DelPopup => _ = self.popups.pop(),
         };
-        None
     }
 }
 
@@ -144,11 +166,37 @@ impl EventHandler<(), InterfaceState> for Interface {
         if self.should_quit(event) {
             return Some(InterfaceState::Quit(Ok(())));
         }
+        if let Event::Key(key) = event {
+            match key.code {
+                KeyCode::Esc => {
+                    if self.help_screen.active {
+                        self.help_screen.active = false;
+                        self.change_state(ScreenState::Selection);
+                    }
+                }
+                KeyCode::Char('?') => {
+                    self.help_screen.active = !self.help_screen.active;
+                    if self.help_screen.active {
+                        self.change_state(ScreenState::Help);
+                    } else {
+                        self.change_state(ScreenState::Selection);
+                    }
+                }
+
+                _ => {}
+            };
+        }
 
         match self.screen_state {
             ScreenState::Selection => self.handle_selection_bar(event),
             ScreenState::Editor => self.handle_editor(event),
-            ScreenState::Help => None,
+            ScreenState::Help => {
+                if let Event::Key(key) = event {
+                    if key.code == KeyCode::Esc {
+                        self.change_state(ScreenState::Selection);
+                    }
+                }
+            }
         };
 
         None
@@ -176,6 +224,7 @@ impl Interface {
             collection,
             editor,
             selection_bar,
+            help_screen: HelpScreen::default(),
 
             selected_list: 0,
             screen_size: viewport,
@@ -187,10 +236,6 @@ impl Interface {
         _ = self.terminal.draw(|frame| {
             let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
             let [selection_area, editor_area] = layout.areas(frame.area());
-
-            let list = self.collection.lists.get(self.selected_list);
-            self.selection_bar.draw(frame, selection_area);
-            self.editor.draw(frame, editor_area, list);
 
             match self.screen_state {
                 ScreenState::Selection => {
@@ -208,9 +253,14 @@ impl Interface {
                     frame.set_cursor_position(position);
                 }
                 ScreenState::Help => {
-                    HelpScreen::draw(&HelpScreen::default(), frame.area(), frame);
+                    self.help_screen.draw(frame.area(), frame);
+                    return;
                 }
             };
+
+            let list = self.collection.lists.get(self.selected_list);
+            self.selection_bar.draw(frame, selection_area);
+            self.editor.draw(frame, editor_area, list);
 
             if let Some(popup) = self.popups.last() {
                 match popup {
