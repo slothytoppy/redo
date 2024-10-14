@@ -145,6 +145,10 @@ impl Editor {
     pub fn push_char(&mut self, c: char) {
         self.buffer.push(c);
     }
+
+    pub fn cursor_pos(&self) -> (u16, u16) {
+        (self.cursor.y, self.cursor.x)
+    }
 }
 
 impl CursorMovement for Editor {

@@ -83,8 +83,8 @@ pub struct Interface {
 }
 
 impl Interface {
-    pub fn handle_selection_bar(&mut self, event: &Event) {
-        if let Some(state) = self.selection_bar.handle_event(event, self.collection_names()) {
+    pub fn handle_selection_bar(&mut self, event: &Event, names: &Vec<String>) {
+        if let Some(state) = self.selection_bar.handle_event(event, names) {
             match state {
                 SelectionState::DelPopup => _ = self.popups.pop(),
                 SelectionState::Show(idx) => {
@@ -190,7 +190,10 @@ impl EventHandler<(), InterfaceState> for Interface {
         }
 
         match self.screen_state {
-            ScreenState::Selection => self.handle_selection_bar(event),
+            ScreenState::Selection => {
+                let names = self.collection_names().clone();
+                self.handle_selection_bar(event, &names);
+            }
             ScreenState::Editor => self.handle_editor(event),
             ScreenState::Help => {
                 if let Event::Key(key) = event {
@@ -215,11 +218,6 @@ impl Interface {
         let mut selection_bar = SelectionBar::default();
         selection_bar.viewport = viewport;
 
-        let mut names = vec![];
-        // this clone isnt good, maybe passing Vec<&String> is better or doing something else
-        collection.lists.iter().for_each(|list| names.push(list.title.clone()));
-        //selection_bar.set_names(names);
-
         Self {
             popups: vec![],
             terminal,
@@ -236,6 +234,7 @@ impl Interface {
 
     pub fn draw(&mut self) {
         let names = self.collection_names();
+
         _ = self.terminal.draw(|frame| {
             let layout = Layout::horizontal([Constraint::Percentage(20), Constraint::Percentage(80)]);
             let [selection_area, editor_area] = layout.areas(frame.area());
@@ -250,9 +249,8 @@ impl Interface {
 
                 ScreenState::Editor => {
                     let padding: u16 = 4; // padding is `[ ] `
-                    let x = self.editor.cursor.x + 1;
-                    let y = self.editor.cursor.y + 1;
-                    let position = Position::new(editor_area.x + x + padding, y);
+                    let (y, x) = self.editor.cursor_pos();
+                    let position = Position::new(editor_area.x + x + 1 + padding, y + 1);
                     frame.set_cursor_position(position);
                 }
                 ScreenState::Help => {
@@ -262,7 +260,7 @@ impl Interface {
             };
 
             let list = self.collection.lists.get(self.selected_list);
-            self.selection_bar.draw(frame, selection_area, names);
+            self.selection_bar.draw(frame, selection_area, &names);
             self.editor.draw(frame, editor_area, list);
 
             if let Some(popup) = self.popups.last() {

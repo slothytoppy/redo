@@ -29,8 +29,8 @@ pub enum SelectionState {
     Show(usize),
 }
 
-impl EventHandler<Vec<String>, SelectionState> for SelectionBar {
-    fn handle_event(&mut self, event: &Event, names: Vec<String>) -> Option<SelectionState> {
+impl EventHandler<&Vec<String>, SelectionState> for SelectionBar {
+    fn handle_event(&mut self, event: &Event, names: &Vec<String>) -> Option<SelectionState> {
         if let Event::Key(key) = event {
             if self.popup_mode {
                 match key.code {
@@ -103,7 +103,7 @@ impl EventHandler<Vec<String>, SelectionState> for SelectionBar {
 }
 
 impl SelectionBar {
-    pub fn draw(&mut self, frame: &mut Frame, selection_area: Rect, names: Vec<String>) {
+    pub fn draw(&mut self, frame: &mut Frame, selection_area: Rect, names: &[String]) {
         let mut names_vec = vec![];
         for item in names.iter().skip(self.scroll as usize).take(self.viewport.y() as usize) {
             names_vec.push(item.clone());
@@ -138,14 +138,6 @@ impl SelectionBar {
             }),
         );
     }
-
-    //pub fn remove_name(&mut self, idx: usize) {
-    //    if self.names.is_empty() || idx > self.names.len() {
-    //        return;
-    //    }
-    //    self.names.remove(idx);
-    //    self.cursor.y = self.cursor.y.saturating_sub(1)
-    //}
 
     pub fn cursor_pos(&self) -> (u16, u16) {
         (self.cursor.y, self.cursor.x)
