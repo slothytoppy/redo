@@ -26,6 +26,11 @@ impl App {
             }
         };
 
+        let path=std::path::Path::new(&file);
+        if path.is_dir(){
+            panic!("Error: Argument was a directory");
+        }
+
         let content = filesystem::read(&file).unwrap_or_default();
         let collection = parser::parse_collection(&content).unwrap_or_default();
 
